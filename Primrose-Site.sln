@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Primrose-Site", "Primrose-Site.njsproj", "{0AB50445-5CE1-4EBD-A7FD-01C523AD3A0C}"
+Project("{1CA0EF4D-DFFD-46D5-B9B8-6ED51D14A792}") = "Primrose-Site", "Primrose-Site.njsproj", "{0AB50445-5CE1-4EBD-A7FD-01C523AD3A0C}"
 EndProject
 Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Primrose", "..\Primrose\Primrose.njsproj", "{F2FF07A2-BBAF-40DB-B8B0-38022708477C}"
 EndProject
