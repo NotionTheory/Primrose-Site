@@ -96,10 +96,6 @@
     <Content Include="favicon.png" />
     <Content Include="favicon.ico" />
     <Content Include="package.json" />
-    <Content Include="CHANGELOG.md" />
-    <Content Include="CONTRIBUTORS.md" />
-    <Content Include="LICENSE.md" />
-    <Content Include="README.md" />
     <Content Include="sitemap.xml" />
     <Content Include="doc\nypl\app.js" />
     <Content Include="doc\frontPageBanner.html.jade" />
