@@ -8,7 +8,8 @@ block document
   p It includes a suite of GUI controls—like buttons and a syntax-highlighting code editor control—to simplify the process of building VR applications that emphasize interactive, productive work. Use it to experiment with new ideas on productivity UIs in virtual spaces.
   p Primrose is free, open source software (#[a(href="https://github.com/capnmidnight/Primrose/blob/master/LICENSE.md", target="_blank") GPLv3]) and may readily be used with other #[a(href="https://en.wikipedia.org/wiki/Free_and_open-source_software", target="_blank") FOSS] projects.
   ul
-    li: a(href= fileRoot + "scripts/Primrose.min.js", target="_blank") Download the latest version of the Primrose WebVR framework
+    li: a(href= fileRoot + "Primrose.min.js", target="_blank") Download the latest version of the Primrose WebVR framework
+    li: a(href= fileRoot + "PrimroseDependencies.min.js", target="_blank") Download Primrose's dependencies as a single package
     li: a(href= fileRoot + "doc/setup.html") Read detailed installation and setup instructions
     li: a(href= fileRoot + "doc/drum.html") Learn how to make a simple drum-machine application
       
@@ -22,66 +23,27 @@ block document
     li: a(href="https://developer.mozilla.org/en-US/docs/Web/API/WebVR_API", target="_blank") Read the WebVR documentation on MDN
 
   h2 Example
-  p Using Primrose to make web applications is straightforward. To start, perform the following file operations all in the same directory:
-  ol
-    li download #[a(href="http://threejs.org/build/three.min.js", target="_blank") the latest Three.js library file].
-    li download #[a(href= fileRoot + "scripts/Primrose.min.js", target="_blank") the latest Primrose library file].
-    li download #[a(href= fileRoot + "doc/images/bg.jpg", target="_blank") a skymap image].
-    li download #[a(href= fileRoot + "doc/images/deck.png", target="_blank") a ground texture].
-    li create a text file named #[code index.html]
-    li create a text file named #[code style.css]
-    li create a text file named #[code app.js]
-
-  p When you are done, your directory structure should look like:
+  p Using Primrose to make web applications is straightforward. To start, #[a(href= fileRoot + "quickstart.zip") download the `quickstart` example project]. In it, you will find the following files:
   ul
-    li app.js
-    li deck.png
-    li index.html
-    li sky.jpg
-    li style.css
+    li #[code app.js] - this is where you will write your JavaScript code to define your scene.
+    li #[code bg.jpg] - a skymap texture.
+    li #[code cardboard.mtl] - materials for cardboard.obj,
+    li #[code cardboard.obj] - an icon for activating VR mode.
+    li #[code deck.png] - a ground texture.
+    li #[code helvetiker_regular.typeface.js] - a font for 3D text elements.
+    li #[code index.html] - an HTML file to pull it all together.
+    li #[code monitor.mtl] - materials for monitor.obj,
+    li #[code monitor.obj] - an icon for activating regular full-screen mode.
+    li #[code Primrose.min.js] - the Primrose framework.
+    li #[code PrimroseDependencies.min.js] - 3rd party JS libraries like Three.js on which Primrose depends, prepackaged for you.
+    li #[code PrimroseDocumentation.min.js] - the live documentation database for Primrose.
+    li #[code StartHere.exe] - run this executable on Windows to setup a local web server and automatically start your browser.
+    li #[code wind.ogg] - some ambient noise for aiding in orienting one's self in the space.
 
-  p In the #[code index.html] file, enter the following markup.
-  pre: code.
-    grammar("HTML");
-    &lt;!DOCTYPE html>
-    &lt;html>
-      &lt;head>
-        &lt;meta charset="utf-8">
-        &lt;meta name="viewport" content="width=device-width, initial-scale=1.0">
-        &lt;title>My Primrose VR Application&lt;/title>
-        &lt;script type="text/javascript" src="three.min.js">&lt;/script>
-        &lt;script type="text/javascript" src="Primrose.min.js">&lt;/script>
-        &lt;link type="text/css" rel="stylesheet" href="style.css">
-      &lt;/head>
-      &lt;body>
-        &lt;canvas id="frontBuffer" tabindex="1">&lt;/canvas>
-        &lt;script type="text/javascript" src="app.js">&lt;/script>
-      &lt;/body>
-    &lt;/html>
-  p In the #[code style.css] file, enter the following style definitions.
-  pre: code.
-    grammar("CSS");
-    html, body, #frontBuffer {
-      padding: 0;
-      margin: 0;
-      border: 0;
-      width: 100%;
-    }
- 
-    html, body {
-      position: absolute;
-      height: 100%;
-    }
- 
-    #frontBuffer {
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-  p In the #[code app.js] file, enter the following code.
+
+  p In the #[code app.js] file, you'll find the relevant scripts to edit to make your own VR applications. The template project starts out fairly empty.
   pre: code.
     grammar("JavaScript");
-    /* global Primrose, put */
     var app = new Primrose.BrowserEnvironment( "My Primrose VR Application", {
         skyTexture: "bg.jpg",
         groundTexture: "deck.png"
@@ -108,5 +70,6 @@ block document
       // Perform per-frame updates here, like moving objects around according to your
       // own rules.
     } );
-  p The results, once ran in your browser, should look something like this:
+    
+  p If everything worked correctly, it should look something like this:
   img(src="images/gettingStarted.jpg", alt="screenshot", title="Blank scene")

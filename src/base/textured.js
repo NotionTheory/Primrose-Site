@@ -3,22 +3,38 @@
   description: "| [under construction]"
 });
 var textured = (function () {
-  var textureCache = {};
+  var textureLoader = null,
+    textureCache = {};
+  Primrose.loadTexture = function (url) {
+    if (!textureLoader) {
+      textureLoader = new THREE.TextureLoader();
+    }
+    textureLoader.setCrossOrigin(THREE.ImageUtils.crossOrigin);
+    return cache(
+      `Image(${url})`,
+      () => new Promise((resolve, reject) => textureLoader.load(url, resolve, null, reject)));
+  };
+
   function textured(geometry, txt, options) {
     options = options || {};
     if (options.opacity === undefined) {
       options.opacity = 1;
     }
 
-    var txtID = txt.id || txt.toString(),
-      textureDescription = `Primrose.textured(${txtID}, ${options.txtRepeatS}, ${options.txtRepeatT})`,
-      materialDescription = `material(${textureDescription}, ${options.unshaded}, ${options.opacity})`,
+    var material = null;
+    if (txt instanceof THREE.Material) {
+      material = txt;
+      txt = null;
+    }
+    else {
+      var txtID = txt.id || txt.toString(),
+        textureDescription = `Primrose.textured(${txtID}, ${options.txtRepeatS}, ${options.txtRepeatT})`,
+        materialDescription = `material(${textureDescription}, ${options.unshaded}, ${options.opacity})`;
       material = cache(materialDescription, () => {
         var materialOptions = {
-          transparent: true,
+          transparent: options.opacity < 1,
           opacity: options.opacity,
-          side: THREE.DoubleSide,
-          alphaTest: 0.5
+          side: THREE.DoubleSide
         },
           MaterialType = THREE.MeshStandardMaterial;
 
@@ -38,6 +54,7 @@ var textured = (function () {
         }
         return new MaterialType(materialOptions);
       });
+    }
 
     material.wireframe = !!options.wireframe;
 
@@ -46,21 +63,24 @@ var textured = (function () {
       obj = new THREE.Mesh(geometry, material);
     }
     else if (geometry instanceof THREE.Object3D) {
-      geometry.material = material;
       obj = geometry;
+      obj.material = material;
     }
 
     if (typeof txt === "number" || txt instanceof Number) {
       material.color.set(txt);
     }
-    else {
+    else if (txt) {
       material.color.set(0xffffff);
 
       var setTexture = function (texture) {
+        var surface;
         if (texture instanceof Primrose.Surface) {
+          surface = texture;
+          texture = surface.texture;
           if (options.scaleTextureWidth || !options.scaleTextureHeight) {
-            var imgWidth = texture.imageWidth,
-              imgHeight = texture.imageHeight,
+            var imgWidth = surface.imageWidth,
+              imgHeight = surface.imageHeight,
               dimX = Math.ceil(Math.log(imgWidth) / Math.LN2),
               dimY = Math.ceil(Math.log(imgHeight) / Math.LN2),
               newWidth = Math.pow(2, dimX),
@@ -77,14 +97,12 @@ var textured = (function () {
                 options.scaleTextureHeight = scaleY;
               }
 
-              texture.bounds.width = newWidth;
-              texture.bounds.height = newHeight;
-              texture.resize();
-              texture.invalidate();
+              surface.bounds.width = newWidth;
+              surface.bounds.height = newHeight;
+              surface.resize();
+              surface.render(true);
             }
           }
-
-          texture = texture.texture;
         }
 
 

@@ -1,5 +1,3 @@
-/* global pliny */
-
 pliny.function({
   name: "getSetting",
   parameters: [
@@ -35,6 +33,8 @@ function getSetting ( name, defValue ) {
       }
       catch ( exp ) {
         console.error( "getSetting", name, val, typeof ( val ), exp );
+        console.error(exp);
+        console.error("getSetting", name, val, typeof (val));
       }
     }
   }

@@ -1,5 +1,3 @@
-/* global Primrose, speechSynthesis, pliny */
-
 Primrose.Output.Speech = ( function ( ) {
   function pickRandomOption ( options, key, min, max ) {
     if ( options[key] === undefined ) {
@@ -39,7 +37,8 @@ Primrose.Output.Speech = ( function ( ) {
       };
     };
   }
-  catch ( exp ) {
+  catch (exp) {
+    console.error(exp);
 
     // in case of error, return a shim that lets us continue unabated
     pliny.class({

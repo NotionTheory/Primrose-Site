@@ -1,4 +1,3 @@
-/* global isOSX, Primrose, THREE, isVR, isMobile, put, exp */
 var GRASS = "images/grass.png",
   ROCK = "images/rock.png",
   SAND = "images/sand.png",
@@ -6,10 +5,12 @@ var GRASS = "images/grass.png",
   DECK = "images/deck.png",
 
   app = new Primrose.BrowserEnvironment("Editor3D", {
-    useFog: false,
     skyTexture: "images/bg2.jpg",
     ambientSound: "audio/wind.ogg",
-    groundTexture: GRASS
+    groundTexture: GRASS,
+    fullScreenIcon: "models/monitor.obj",
+    VRIcon: "models/cardboard.obj",
+    font: "fonts/helvetiker_regular.typeface.js"
   }),
 
   subScene = new THREE.Object3D(),
@@ -21,8 +22,8 @@ var GRASS = "images/grass.png",
   editorFrameMesh = null,
   documentation = null,
   documentationMesh = null,
-  stereoImage = new Primrose.Controls.Image(),
-  stereoImageWindow,
+  stereoImage = null,
+  stereoImageMesh = null,
 
   modA = isOSX ? "metaKey" : "ctrlKey",
   modB = isOSX ? "altKey" : "shiftKey",
@@ -32,27 +33,24 @@ var GRASS = "images/grass.png",
 
   scriptUpdateTimeout,
   lastScript = null,
-  scriptAnimate = null;
+  scriptAnimate = null,
 
-function makeWindow(id, width, height, size) {
-  size = size || 1;
-  return textured(quad(size, size * height / width), new Primrose.Surface({
-    id: id,
-    bounds: new Primrose.Text.Rectangle(0, 0, width, height)
-  }));
-}
+  editorCenter = new THREE.Object3D();
 
 app.addEventListener("ready", function () {
+  app.scene.add(editorCenter);
   app.scene.add(subScene);
 
+  stereoImage = new Primrose.Controls.Image({
+    id: "StereoImage"
+  });
   stereoImage.loadStereoImage("images/prong.stereo.jpg")
-    .then(function (img) {
-      stereoImageWindow = makeWindow("StereoImage", stereoImage.imageWidth, stereoImage.imageHeight, 0.5);
-      stereoImageWindow.rotation.set(0, 75 * Math.PI / 180, 0);
-      stereoImageWindow.position.set(-4, app.avatarHeight, -1);
-      stereoImageWindow.surface.appendChild(stereoImage);
-      app.scene.add(stereoImageWindow);
-      app.registerPickableObject(stereoImageWindow);
+    .then(function () {
+      stereoImageMesh = textured(quad(0.5, 0.5 * stereoImage.imageHeight / stereoImage.imageWidth), stereoImage);
+      stereoImageMesh.rotation.set(0, 75 * Math.PI / 180, 0);
+      stereoImageMesh.position.set(-4, app.avatarHeight, -1);
+      app.scene.add(stereoImageMesh);
+      app.registerPickableObject(stereoImageMesh);
     });
 
   var editorSize = isMobile ? 512 : 1024,
@@ -103,10 +101,12 @@ app.addEventListener("ready", function () {
   editorFrame.appendChild(output);
   editorFrame.appendChild(editor);
   editorFrame.appendChild(button1);
-  editorFrameMesh = textured(shell(3, 10, 10), editorFrame);
+  editorFrameMesh = textured(shell(3, 10, 10), editorFrame, {
+    opacity: 0.75
+  });
   editorFrameMesh.name = "MyWindow";
-  editorFrameMesh.position.set(0, app.avatarHeight, 0);
-  app.scene.add(editorFrameMesh);
+  editorFrameMesh.position.set(0, 0, 0);
+  editorCenter.add(editorFrameMesh);
   app.registerPickableObject(editorFrameMesh);
 
   documentation = new Primrose.Text.Controls.TextBox({
@@ -120,7 +120,7 @@ app.addEventListener("ready", function () {
   });
 
   documentationMesh = textured(quad(2, 2), documentation);
-  documentationMesh.position.set(-3, app.avatarHeight, -2);
+  documentationMesh.position.set(-2.2, app.avatarHeight, -1);
   documentationMesh.rotation.set(0, Math.PI / 4, 0);
   app.scene.add(documentationMesh);
   app.registerPickableObject(documentationMesh);
@@ -137,16 +137,27 @@ app.addEventListener("update", function (dt) {
     scriptUpdateTimeout = setTimeout(updateScript, 500);
   }
 
+  editorCenter.position.copy(app.player.position);
+
   if (scriptAnimate) {
-    scriptAnimate.call(app, dt);
+    // If quality has degraded, it's likely because the user bombed on a script.
+    // Let's help them not lose their lunch.
+    if (app.quality === Primrose.Quality.NONE) {
+      scriptAnimate = null;
+      wipeScene();
+    }
+    else{
+      scriptAnimate.call(app, dt);
+    }
   }
 });
 
 app.addEventListener("keydown", function (evt) {
   if (evt[modA] && evt[modB]) {
     if (evt.keyCode === Primrose.Keys.E) {
-      documentation.mesh.visible = output.mesh.visible = editor.mesh.visible = !editor.mesh.visible;
-      if (!editor.mesh.visible && app.currentEditor && app.currentEditor.focused) {
+      documentationMesh.visible = editorFrameMesh.visible = !editorFrameMesh.visible;
+      documentationMesh.disabled = editorFrameMesh.disabled = !editorFrameMesh.disabled;
+      if (!editorFrameMesh.visible && app.currentEditor && app.currentEditor.focused) {
         app.currentEditor.blur();
         app.currentEditor = null;
       }
@@ -171,6 +182,12 @@ window.addEventListener("unload", function () {
   }
 });
 
+function wipeScene() {
+  for (var i = subScene.children.length - 1; i >= 0; --i) {
+    subScene.remove(subScene.children[i]);
+  }
+}
+
 function updateScript() {
   var newScript = editor.value,
     exp;
@@ -184,14 +201,21 @@ function updateScript() {
     try {
       console.log("----- loading new script -----");
       var scriptUpdate = new Function("scene", newScript);
-      for (var i = subScene.children.length - 1; i >= 0; --i) {
-        subScene.remove(subScene.children[i]);
-      }
+      wipeScene();
       scriptAnimate = scriptUpdate.call(app, subScene);
-      scriptAnimate(0);
+      if (scriptAnimate) {
+        scriptAnimate(0);
+      }
       console.log("----- script loaded -----");
+      if (!scriptAnimate) {
+        console.log("----- No update script provided -----");
+      }
+      else if (app.quality === Primrose.Quality.NONE) {
+        app.quality = Primrose.Quality.MEDIUM;
+      }
     }
     catch (exp) {
+      console.error(exp);
       scriptAnimate = null;
       throw exp;
     }

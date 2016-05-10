@@ -1,5 +1,3 @@
-/* global qp, Primrose, isOSX, isIE, isOpera, isChrome, isFirefox, isSafari, devicePixelRatio, HTMLCanvasElement, pliny */
-
 Primrose.Text.Controls.TextBox = (function () {
   "use strict";
 
@@ -10,6 +8,7 @@ Primrose.Text.Controls.TextBox = (function () {
     parent: "Primrose.Text.Controls",
     name: "TextBox",
     description: "Syntax highlighting textbox control.",
+    baseClass: "Primrose.Surface",
     parameters: [
       { name: "idOrCanvasOrContext", type: "String or HTMLCanvasElement or CanvasRenderingContext2D", description: "Either an ID of an element that exists, an element, or the ID to set on an element that is to be created." },
       { name: "options", type: "Object", description: "Named parameters for creating the TextBox." }
@@ -786,8 +785,7 @@ Primrose.Text.Controls.TextBox = (function () {
 
     renderCanvasForeground() {
       var tokenFront = new Primrose.Text.Cursor(),
-        tokenBack = new Primrose.Text.Cursor(),
-        lineOffsetY = Math.ceil(this.character.height * 0.2);
+        tokenBack = new Primrose.Text.Cursor();
 
       this._fgfx.clearRect(0, 0, this.imageWidth, this.imageHeight);
       this._fgfx.save();
@@ -797,8 +795,7 @@ Primrose.Text.Controls.TextBox = (function () {
         var line = this.lines[y] + this.padding,
           row = this._tokenRows[y],
           drawn = false,
-          textY = (y - 0.2 - this.scroll.y) * this.character.height,
-          imageY = textY + lineOffsetY;
+          textY = (y - this.scroll.y) * this.character.height;
 
         for (var i = 0; i < row.length; ++i) {
           var t = row[i];
@@ -813,7 +810,7 @@ Primrose.Text.Controls.TextBox = (function () {
             // draw the text
             if (this.useCaching && this._rowCache[line] !== undefined) {
               if (i === 0) {
-                this._fgfx.putImageData(this._rowCache[line], this.padding, imageY + this.padding);
+                this._fgfx.putImageData(this._rowCache[line], this.padding, textY + this.padding);
               }
             }
             else {
@@ -839,7 +836,7 @@ Primrose.Text.Controls.TextBox = (function () {
         if (this.useCaching && drawn && this._rowCache[line] === undefined) {
           this._rowCache[line] = this._fgfx.getImageData(
             this.padding,
-            imageY + this.padding,
+            textY + this.padding,
             this.imageWidth - 2 * this.padding,
             this.character.height);
         }
@@ -899,7 +896,7 @@ Primrose.Text.Controls.TextBox = (function () {
             this._tgfx.fillStyle = this.theme.regular.foreColor;
             this._tgfx.fillText(
               lineNumber,
-              0, (y - 0.2) * this.character.height);
+              0, y * this.character.height);
           }
           lastLine = currentLine;
         }

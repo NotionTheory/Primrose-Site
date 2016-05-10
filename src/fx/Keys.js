@@ -1,19 +1,17 @@
-/* global Primrose, pliny */
-
-Primrose.Keys = ( function ( ) {
+Primrose.Keys = (function () {
   "use strict";
 
   pliny.enumeration({
     parent: "Primrose",
     name: "Keys",
     description: "Keycode values for system keys that are the same across all international standards"
-  } );
+  });
   var Keys = {
-    ANY: 0,
+    ANY: Number.MAX_VALUE,
     ///////////////////////////////////////////////////////////////////////////
     // modifiers
     ///////////////////////////////////////////////////////////////////////////
-    MODIFIER_KEYS: [ "ctrl", "shift", "alt", "meta", "meta_l", "meta_r" ],
+    MODIFIER_KEYS: ["ctrl", "shift", "alt", "meta", "meta_l", "meta_r"],
     SHIFT: 16,
     CTRL: 17,
     ALT: 18,
@@ -134,15 +132,12 @@ Primrose.Keys = ( function ( ) {
   };
 
   // create a reverse mapping from keyCode to name.
-  for ( var key in Keys ) {
+  for (var key in Keys) {
     var val = Keys[key];
-    if ( Keys.hasOwnProperty( key ) && typeof ( val ) === "number" ) {
+    if (Keys.hasOwnProperty(key) && typeof (val) === "number") {
       Keys[val] = key;
     }
   }
-  
-  pliny.setEnumerationValues("Primrose.Keys", Keys);
 
   return Keys;
-} )();
-
+})();

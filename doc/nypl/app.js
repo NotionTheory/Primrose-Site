@@ -1,5 +1,3 @@
-/* global isOSX, Primrose, THREE, isVR, isMobile, put, exp */
-
 var GRASS = "images/grass.png",
   ROCK = "images/rock.png",
   SAND = "images/sand.png",
@@ -7,9 +5,11 @@ var GRASS = "images/grass.png",
   DECK = "images/deck.png",
   SKY = "images/bg2.jpg",
   app = new Primrose.BrowserEnvironment("NYPL", {
-    useFog: false,
     skyTexture: SKY,
-    groundTexture: GRASS
+    groundTexture: GRASS,
+    fullScreenIcon: "models/monitor.obj",
+    VRIcon: "models/cardboard.obj",
+    font: "fonts/helvetiker_regular.typeface.js"
   }),
   modA = isOSX ? "metaKey" : "ctrlKey",
   modB = isOSX ? "altKey" : "shiftKey",

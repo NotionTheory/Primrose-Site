@@ -4,9 +4,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/* global Primrose, THREE, io, CryptoJS, Notification, HMDVRDevice, devicePixelRatio
- * Function, emit, isMobile, isiOS, shell, quad, HTMLCanvasElement, pliny */
-
 Primrose.BrowserEnvironment = function () {
   "use strict";
 
@@ -41,8 +38,7 @@ Primrose.BrowserEnvironment = function () {
       FORWARD = new THREE.Vector3(0, 0, -1),
       POINTER_RADIUS = 0.01,
       POINTER_RESCALE = 20,
-      FORWARDED_EVENTS = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "mousemove", "wheel", "touchstart", "touchend", "touchmove"],
-      RESOLUTION_SCALE = 1;
+      FORWARDED_EVENTS = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "mousemove", "wheel", "touchstart", "touchend", "touchmove"];
 
   pliny.class({
     parent: "Primrose",
@@ -77,6 +73,9 @@ Primrose.BrowserEnvironment = function () {
           _this.player.position.set(0, _this.avatarHeight, 0);
           _this.player.velocity.set(0, 0, 0);
           _this.input.zero();
+          if (_this.quality === Primrose.Quality.NONE) {
+            _this.quality = Primrose.Quality.HIGH;
+          }
         }
       };
 
@@ -251,13 +250,12 @@ Primrose.BrowserEnvironment = function () {
             j;
         lt = t;
 
-        checkFullscreen();
-
         movePlayer(dt);
         moveSky();
         moveGround();
         movePointer();
         resolvePicking();
+        checkQuality();
         fire("update", dt);
       };
 
@@ -270,7 +268,7 @@ Primrose.BrowserEnvironment = function () {
             drive = _this.input.getValue("drive");
 
         if (_this.inVR || isMobile) {
-          _this.input.getQuaternion("headRX", "headRY", "headRZ", "headRW", qHead);
+          _this.input.getOrientation(qHead);
         } else {
           qHead.set(0, 0, 0, 1);
         }
@@ -432,8 +430,8 @@ Primrose.BrowserEnvironment = function () {
                 control = object.button || object.surface;
 
             if (!lockedToEditor()) {
-              buttons |= _this.input.keyboard.getValue("select");
-              clickChanged = clickChanged || _this.input.keyboard.getValue("dSelect") !== 0;
+              buttons |= _this.input.Keyboard.getValue("select");
+              clickChanged = clickChanged || _this.input.Keyboard.getValue("dSelect") !== 0;
             }
 
             if (!clickChanged && buttons > 0) {
@@ -453,6 +451,7 @@ Primrose.BrowserEnvironment = function () {
       };
 
       var animate = function animate(t) {
+        checkFullscreen();
         RAF(animate);
         update(t * MILLISECONDS_TO_SECONDS);
         render();
@@ -463,7 +462,7 @@ Primrose.BrowserEnvironment = function () {
       var render = function render() {
         if (_this.inVR) {
           _this.renderer.clear(true, true, true);
-          var trans = _this.input.vr.transforms;
+          var trans = _this.input.VR.transforms;
           for (var i = 0; trans && i < trans.length; ++i) {
             var st = trans[i],
                 v = st.viewport,
@@ -481,19 +480,20 @@ Primrose.BrowserEnvironment = function () {
               _this.nose.position.set(side * -0.12, -0.12, -0.15);
               _this.nose.rotation.z = side * 0.7;
             }
-            _this.renderer.setViewport(v.left * RESOLUTION_SCALE, v.top * RESOLUTION_SCALE, v.width * RESOLUTION_SCALE, v.height * RESOLUTION_SCALE);
+            _this.renderer.setViewport(v.left * resolutionScale, v.top * resolutionScale, v.width * resolutionScale, v.height * resolutionScale);
             _this.renderer.render(_this.scene, _this.camera);
           }
-          _this.input.vr.currentDisplay.submitFrame(_this.input.vr.currentPose);
+          _this.input.VR.currentDisplay.submitFrame(_this.input.VR.currentPose);
         }
 
         if (!isMobile) {
           _this.audio.setPlayer(_this.camera);
         }
 
-        if (!_this.inVR || _this.input.vr.currentDisplay.capabilities.hasExternalDisplay && !_this.options.disableMirroring) {
+        if (!_this.inVR || _this.input.VR.currentDisplay.capabilities.hasExternalDisplay && !_this.options.disableMirroring) {
           if (blankEye) {
-            Primrose.Entity.eyeBlankAll(eyeCounter = 1 - eyeCounter);
+            eyeCounter = 1 - eyeCounter;
+            Primrose.Entity.eyeBlankAll(eyeCounter);
           }
           _this.nose.visible = false;
           _this.camera.fov = _this.options.defaultFOV;
@@ -507,15 +507,7 @@ Primrose.BrowserEnvironment = function () {
         }
       };
 
-      var modifyScreen = function modifyScreen() {
-        _this.renderer.domElement.style.cursor = "default";
-        var canvasWidth,
-            canvasHeight,
-            aspectWidth,
-            bounds = _this.renderer.domElement.getBoundingClientRect(),
-            elementWidth = bounds.width,
-            elementHeight = bounds.height;
-
+      var setOrientationLock = function setOrientationLock() {
         if (isMobile) {
           if (isFullScreenMode()) {
             var type = screen.orientation && screen.orientation.type || screen.mozOrientation || "";
@@ -535,32 +527,45 @@ Primrose.BrowserEnvironment = function () {
             }
           }
         }
+      };
+
+      var modifyScreen = function modifyScreen() {
+        var canvasWidth, canvasHeight, aspectWidth;
+
+        setOrientationLock();
 
         if (_this.inVR) {
-          _this.input.vr.resetTransforms(_this.options.nearPlane, _this.options.nearPlane + _this.options.drawDistance);
+          _this.input.VR.resetTransforms(_this.options.nearPlane, _this.options.nearPlane + _this.options.drawDistance);
 
-          var p = _this.input.vr.transforms,
+          var p = _this.input.VR.transforms,
               l = p[0],
               r = p[1];
-          canvasWidth = Math.floor((l.viewport.width + r.viewport.width) * RESOLUTION_SCALE);
-          canvasHeight = Math.floor(Math.max(l.viewport.height, r.viewport.height) * RESOLUTION_SCALE);
+          canvasWidth = Math.floor((l.viewport.width + r.viewport.width) * resolutionScale);
+          canvasHeight = Math.floor(Math.max(l.viewport.height, r.viewport.height) * resolutionScale);
           aspectWidth = canvasWidth / 2;
         } else {
-          var pixelRatio = devicePixelRatio || 1;
-          if (isiOS) {
-            elementHeight = elementWidth * screen.width / screen.height;
-          }
+          var pixelRatio = devicePixelRatio || 1,
+              elementWidth,
+              elementHeight;
           if (FullScreen.isActive) {
             elementWidth = screen.width;
             elementHeight = screen.height;
+            _this.renderer.domElement.style.width = px(elementWidth);
+            _this.renderer.domElement.style.height = px(elementHeight);
+          } else {
+            _this.renderer.domElement.style.width = "";
+            _this.renderer.domElement.style.height = "";
+            var bounds = _this.renderer.domElement.getBoundingClientRect();
+            elementWidth = bounds.width;
+            if (isiOS) {
+              elementHeight = elementWidth * screen.width / screen.height;
+            } else {
+              elementHeight = bounds.height;
+            }
           }
-          canvasWidth = Math.floor(elementWidth * pixelRatio * RESOLUTION_SCALE);
-          canvasHeight = Math.floor(elementHeight * pixelRatio * RESOLUTION_SCALE);
+          canvasWidth = Math.floor(elementWidth * pixelRatio * resolutionScale);
+          canvasHeight = Math.floor(elementHeight * pixelRatio * resolutionScale);
           aspectWidth = canvasWidth;
-          if (isMobile) {
-            document.body.style.height = Math.max(document.body.clientHeight, elementHeight) + "px";
-            document.documentElement.style.height = Math.max(document.documentElement.clientHeight, elementHeight) + "px";
-          }
         }
 
         _this.renderer.domElement.width = canvasWidth;
@@ -585,18 +590,19 @@ Primrose.BrowserEnvironment = function () {
           skin = Primrose.Random.item(Primrose.SKIN_VALUES),
           readyFired = false,
           modelFiles = {
-        monitor: "models/monitor.obj",
-        fullscreenText: "models/fullscreen_text.obj",
+        monitor: this.options.fullScreenIcon,
         cardboard: null,
-        cardboardText: null,
         scene: this.options.sceneModel,
-        button: this.options.button && typeof this.options.button.model === "string" && this.options.button.model
+        button: this.options.button && typeof this.options.button.model === "string" && this.options.button.model,
+        font: this.options.font
       },
-          monitor = null,
-          cardboard = null;
+          icons = [],
+          cardboardFactory = null,
+          cardboardTextFactory = null,
+          resolutionScale = 1;
+
       if (Primrose.Input.VR.Version > 0) {
-        modelFiles.cardboard = "models/cardboard.obj";
-        modelFiles.cardboardText = "models/vr_text.obj";
+        modelFiles.cardboard = this.options.VRIcon;
       }
 
       function setColor(model, color) {
@@ -604,47 +610,82 @@ Primrose.BrowserEnvironment = function () {
       }
 
       function complementColor(color) {
-        var hsl = color.getHSL();
+        var rgb = color.clone();
+        var hsl = rgb.getHSL();
         hsl.h = hsl.h + 0.5;
         hsl.l = 1 - hsl.l;
         while (hsl.h > 1) {
           hsl.h -= 1;
-        }color.setHSL(hsl.h, hsl.s, hsl.l);
-        return color;
+        }rgb.setHSL(hsl.h, hsl.s, hsl.l);
+        return rgb;
       }
 
+      var putIconInScene = function putIconInScene(icon, i, arr) {
+        var arm = hub();
+        arm.add(icon);
+        icon.position.z = -1;
+        put(arm).on(_this.scene).at(0, _this.options.avatarHeight, 0);
+        var wedge = 75 / arr.length;
+        arm.rotation.set(0, Math.PI * wedge * ((arr.length - 1) * 0.5 - i) / 180, 0);
+        _this.registerPickableObject(icon);
+      };
+
+      var fgColor = null;
+
+      var makeCardboard = function makeCardboard(display, i) {
+        var cardboard = cardboardFactory.clone(),
+            titleText = textured(text3D(0.05, display.displayName), fgColor),
+            vrText = textured(text3D(0.1, "VR"), fgColor);
+
+        cardboard.name = "Cardboard" + i;
+        cardboard.addEventListener("click", _this.goVR.bind(_this, i), false);
+
+        put(titleText).on(cardboard).rot(0, 90 * Math.PI / 180, 0).at(0, -0.1, titleText.geometry.boundingSphere.radius);
+
+        put(vrText).on(cardboard).rot(0, 90 * Math.PI / 180, 0).at(0, 0.075, vrText.geometry.boundingSphere.radius);
+
+        put(cardboard).on(_this.scene).rot(0, 270 * Math.PI / 180, 0);
+
+        _this.registerPickableObject(cardboard);
+        return cardboard;
+      };
+
       var modelsReady = Primrose.ModelLoader.loadObjects(modelFiles).then(function (models) {
+        window.text3D = function (font, size, text) {
+          var geom = new THREE.TextGeometry(text, {
+            font: font,
+            size: size,
+            height: size / 5,
+            curveSegments: 2
+          });
+          geom.computeBoundingSphere();
+          return geom;
+        }.bind(window, models.font);
 
         if (models.scene) {
           buildScene(models.scene);
         }
 
-        monitor = models.monitor;
-        monitor.rotation.set(0, 270 * Math.PI / 180, 0);
-        monitor.position.set(0, 0.7, -1);
-        monitor.name = "Monitor";
-        monitor.add(models.fullscreenText);
-        monitor.addEventListener("click", _this.goFullScreen, false);
-        _this.scene.add(monitor);
-        _this.scene.Monitor = monitor;
-        _this.registerPickableObject(monitor);
-        complementColor(setColor(models.fullscreenText, _this.options.backgroundColor));
+        fgColor = complementColor(new THREE.Color(_this.options.backgroundColor)).getHex();
+
+        if (models.monitor) {
+          var monitor = models.monitor;
+          monitor.name = "Monitor";
+          var monitorText = textured(text3D(0.1, "Fullscreen"), fgColor),
+              radius = monitorText.geometry.boundingSphere.radius;
+          put(monitorText).on(monitor).rot(0, 90 * Math.PI / 180, 0).at(0, 1.25, radius);
+          monitor.addEventListener("click", _this.goFullScreen, false);
+          monitor.rotation.set(0, Math.PI * 3 / 2, 0);
+          monitor.position.y = -1;
+          icons.push(monitor);
+        }
 
         if (models.cardboard) {
-          monitor.rotation.set(0, 300 * Math.PI / 180, 0);
-          monitor.position.set(-0.25, 0.7, -1);
-
-          cardboard = models.cardboard;
-          cardboard.rotation.set(0, 250 * Math.PI / 180, 0);
-          cardboard.position.set(0.2, 1.75, -1);
-          cardboard.name = "Cardboard";
-          cardboard.add(models.cardboardText);
-          cardboard.addEventListener("click", _this.goVR, false);
-          _this.scene.add(cardboard);
-          _this.scene.Cardboard = cardboard;
-          _this.registerPickableObject(cardboard);
-          complementColor(setColor(models.cardboardText, _this.options.backgroundColor));
+          cardboardFactory = new Primrose.ModelLoader(models.cardboard);
+          icons.splice.bind(icons, icons.length, 0).apply(icons, (_this.input.VR && _this.input.VR.displays || [{ displayName: "Test Icon" }]).map(makeCardboard));
         }
+
+        icons.forEach(putIconInScene);
 
         if (models.button) {
           _this.buttonFactory = new Primrose.ButtonFactory(models.button, _this.options.button.options);
@@ -657,7 +698,8 @@ Primrose.BrowserEnvironment = function () {
             toggle: true
           });
         }
-      }).catch(function () {
+      }).catch(function (err) {
+        console.error(err);
         if (!_this.buttonFactory) {
           _this.buttonFactory = new Primrose.ButtonFactory(brick(0xff0000, 1, 1, 1), {
             maxThrow: 0.1,
@@ -668,7 +710,8 @@ Primrose.BrowserEnvironment = function () {
           });
         }
       }).then(function () {
-        return fire("ready");
+        _this.renderer.domElement.style.cursor = "default";
+        fire("ready");
       });
 
       //
@@ -802,14 +845,14 @@ Primrose.BrowserEnvironment = function () {
 
       var RAF = function RAF(callback) {
         if (_this.inVR) {
-          _this.timer = _this.input.vr.currentDisplay.requestAnimationFrame(callback);
+          _this.timer = _this.input.VR.currentDisplay.requestAnimationFrame(callback);
         } else {
           _this.timer = requestAnimationFrame(callback);
         }
       };
 
       this.start = function () {
-        allReady.then(modifyScreen).then(function () {
+        allReady.then(function () {
           _this.audio.start();
           lt = performance.now() * MILLISECONDS_TO_SECONDS;
           RAF(animate);
@@ -818,7 +861,7 @@ Primrose.BrowserEnvironment = function () {
 
       this.stop = function () {
         if (_this.inVR) {
-          _this.input.vr.currentDisplay.cancelAnimationFrame(_this.timer);
+          _this.input.VR.currentDisplay.cancelAnimationFrame(_this.timer);
         } else {
           cancelAnimationFrame(_this.timer);
         }
@@ -895,12 +938,13 @@ Primrose.BrowserEnvironment = function () {
         return FullScreen.request(_this.renderer.domElement);
       };
 
-      this.goVR = function () {
-        if (_this.input.vr) {
-          return _this.input.vr.requestPresent([{ source: _this.renderer.domElement }]).then(function (elem) {
+      this.goVR = function (index) {
+        if (_this.input.VR) {
+          _this.input.VR.connect(index);
+          return _this.input.VR.requestPresent([{ source: _this.renderer.domElement }]).then(function (elem) {
             if (Primrose.Input.VR.Version === 1 && isMobile) {
               var remover = function remover() {
-                _this.input.vr.currentDisplay.exitPresent();
+                _this.input.VR.currentDisplay.exitPresent();
                 window.removeEventListener("vrdisplaypresentchange", remover);
               };
 
@@ -918,12 +962,10 @@ Primrose.BrowserEnvironment = function () {
       };
 
       var showHideButtons = function showHideButtons() {
-        if (cardboard) {
-          cardboard.disabled = _this.inVR;
-          cardboard.visible = !_this.inVR;
-        }
-        monitor.disabled = isFullScreenMode();
-        monitor.visible = !isFullScreenMode();
+        icons.forEach(function (icon) {
+          icon.visible = !isFullScreenMode();
+          icon.disabled = isFullScreenMode();
+        });
       };
 
       window.addEventListener("vrdisplaypresentchange", showHideButtons, false);
@@ -931,7 +973,7 @@ Primrose.BrowserEnvironment = function () {
 
       Primrose.Input.Mouse.Lock.addChangeListener(function (evt) {
         if (!Primrose.Input.Mouse.Lock.isActive && _this.inVR) {
-          _this.input.vr.currentDisplay.exitPresent();
+          _this.input.VR.currentDisplay.exitPresent();
         }
       }, false);
 
@@ -955,19 +997,13 @@ Primrose.BrowserEnvironment = function () {
       };
 
       var setPointerLock = function setPointerLock() {
-        if (isGearVR) {
-          return _this.goVR();
-        } else if (isMobile) {
-          return _this.goFullScreen();
-        } else {
-          return Primrose.Input.Mouse.Lock.isActive || Primrose.Input.Mouse.Lock.request(_this.renderer.domElement);
-        }
+        return (Primrose.Input.Mouse.Lock.isActive || isMobile ? Promise.resolve() : Primrose.Input.Mouse.Lock.request(_this.renderer.domElement)).then(setFullscreen);
       };
 
       var setFullscreen = function setFullscreen() {
-        if (!isFullScreenMode()) {
-          if (Primrose.Input.VR.Version > 0) {
-            _this.goVR();
+        if (!isFullScreenMode() && isMobile) {
+          if (Primrose.Input.VR.Version >= 1) {
+            _this.goVR(0);
           } else {
             _this.goFullScreen();
           }
@@ -998,20 +1034,88 @@ Primrose.BrowserEnvironment = function () {
       window.addEventListener("focus", this.start, false);
       this.renderer.domElement.addEventListener('webglcontextlost', this.stop, false);
       this.renderer.domElement.addEventListener('webglcontextrestored', this.start, false);
-      this.input.addEventListener("zero", this.zero.bind(this), false);
+      this.input.addEventListener("zero", this.zero, false);
       this.input.addEventListener("lockpointer", setPointerLock, false);
       this.input.addEventListener("fullscreen", setFullscreen, false);
       this.input.addEventListener("pointerstart", pointerStart, false);
       this.input.addEventListener("pointerend", pointerEnd, false);
       this.projector.addEventListener("hit", handleHit, false);
 
+      var quality = -1,
+          frameCount = 0,
+          frameTime = 0,
+          NUM_FRAMES = 10,
+          LEAD_TIME = 2000,
+          lastQualityChange = 0,
+          dq1 = 0,
+          dq2 = 0;
+
+      var checkQuality = function checkQuality() {
+        if (_this.options.autoScaleQuality &&
+        // don't check quality if we've already hit the bottom of the barrel.
+        _this.quality !== Primrose.Quality.NONE) {
+          if (frameTime < lastQualityChange + LEAD_TIME) {
+            // wait a few seconds before testing quality
+            frameTime = performance.now();
+          } else {
+            ++frameCount;
+            if (frameCount === NUM_FRAMES) {
+              var now = performance.now(),
+                  dt = (now - frameTime) * 0.001,
+                  fps = Math.round(NUM_FRAMES / dt);
+              frameTime = now;
+              frameCount = 0;
+              // save the last change
+              dq2 = dq1;
+
+              // if we drop low, decrease quality
+              if (fps < 45) {
+                dq1 = -1;
+              } else if (
+              // don't upgrade on mobile devices
+              !isMobile &&
+              // don't upgrade if the user says not to
+              _this.options.autoRescaleQuality &&
+              //good speed
+              fps >= 60 &&
+              // still room to grow
+              _this.quality < Primrose.Quality.MAXIMUM &&
+              // and the last change wasn't a downgrade
+              dq2 !== -1) {
+                dq1 = 1;
+              } else {
+                dq1 = 0;
+              }
+              if (dq1 !== 0) {
+                _this.quality += dq1;
+              }
+              lastQualityChange = now;
+            }
+          }
+        }
+      };
+
       Object.defineProperties(this, {
         inVR: {
           get: function get() {
-            return _this.input.vr && _this.input.vr.currentDisplay && _this.input.vr.currentDisplay.isPresenting;
+            return _this.input.VR && _this.input.VR.currentDisplay && _this.input.VR.currentDisplay.isPresenting;
+          }
+        },
+        quality: {
+          get: function get() {
+            return quality;
+          },
+          set: function set(v) {
+            if (0 <= v && v < Primrose.RESOLUTION_SCALES.length) {
+              quality = v;
+              resolutionScale = Primrose.RESOLUTION_SCALES[v];
+            }
+            allReady.then(modifyScreen);
           }
         }
       });
+
+      this.quality = this.options.quality;
 
       if (window.alert.toString().indexOf("native code") > -1) {
         // overwrite the native alert functions so they can't be called while in
@@ -1111,9 +1215,12 @@ Primrose.BrowserEnvironment = function () {
   BrowserEnvironment.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
 
   BrowserEnvironment.DEFAULTS = {
+    autoScaleQuality: true,
+    autoRescaleQuality: false,
+    quality: Primrose.Quality.MAXIMUM,
     useNose: false,
     useLeap: false,
-    useFog: true,
+    useFog: false,
     avatarHeight: 1.75,
     walkSpeed: 2,
     // The acceleration applied to falling objects.

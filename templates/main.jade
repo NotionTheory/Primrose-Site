@@ -35,18 +35,10 @@ html
       meta(name="twitter:title", content="Primrose VR: WebVR Application Framework")
       title Primrose VR: WebVR Application Framework
     <!-- end main.jade title block -->
-      
-    <!-- start main.jade head block -->
+
     block head
-      if !debug
-        script(type="text/javascript", src= fileRoot + "scripts/analytics.min.js")
-        script(type="text/javascript", src= fileRoot + "scripts/ga.min.js", async, defer)
-    <!-- end main.jade head block -->
   body
   
-    <!-- start main.jade banner block -->
-    block banner
-    <!-- end main.jade banner block -->
     header(role="banner")
       a#logo(href= fileRoot)
         img(src= fileRoot + "images/primrose32.png", alt="logo", title="Primrose logo")
@@ -58,8 +50,11 @@ html
           li: a(href= fileRoot + "doc/") doc/
           li: a(href= fileRoot + "#dev") download/
           li: a(href= fileRoot + "#teamInfo") team/
-          li: a(href= fileRoot + "#mail") contact/
           li: a(href="https://github.com/capnmidnight/Primrose/", target="_blank") src/
+
+    <!-- start main.jade banner block -->
+    block banner
+    <!-- end main.jade banner block -->
 
     <!-- start main.jade main block -->
     block main

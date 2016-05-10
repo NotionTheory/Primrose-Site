@@ -1,5 +1,3 @@
-/* global Primrose, pliny */
- 
 //// 
 // For all of these commands, the "current" cursor is:
 // If SHIFT is not held, then "front.
@@ -11,6 +9,7 @@ Primrose.Text.CommandPacks.BasicTextInput = (function () {
   pliny.record({
     parent: "Primrose.Text.CommandPacks",
     name: "TextInput",
+    baseClass: "Primrose.Text.CommandPack",
     description: "| [under construction]"
   });
   class BasicTextInput extends Primrose.Text.CommandPack {

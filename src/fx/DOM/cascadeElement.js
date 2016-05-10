@@ -1,6 +1,4 @@
-﻿/* global Primrose, pliny */
-
-pliny.function({
+﻿pliny.function({
   parent: "Primrose.DOM",
   name: "cascadeElement",
   description: "* If `id` is a string, tries to find the DOM element that has said ID\n\
@@ -95,7 +93,7 @@ Primrose.DOM.cascadeElement = function (id, tag, DOMClass) {
     pliny.error({ name: "Invalid element", type: "Error", description: "If the element could not be found, could not be created, or one of the appropriate ID was found but did not match the expected type, an error is thrown to halt operation." });
     throw new Error(id + " does not refer to a valid " + tag + " element.");
   }
-  else {
+  else if (tag !== "canvas") {
     elem.innerHTML = "";
   }
   return elem;

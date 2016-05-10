@@ -21,17 +21,17 @@
 <!-- start main.jade title block -->
     <meta property="og:title" content="Primrose VR: WebVR Application Framework">
     <meta name="twitter:title" content="Primrose VR: WebVR Application Framework">
-    <title>Primrose VR: WebVR Application Framework</title><!-- end main.jade title block -->
-<!-- start main.jade head block --><!-- start withFramework.jade head append -->
-    <script type="text/javascript" src="node_modules/logger/logger.min.js"></script>
+    <title>Primrose VR: WebVR Application Framework</title><!-- end main.jade title block --><!-- start withFramework.jade head append -->
+    <script type="text/javascript" src="node_modules/logger/logger.js"></script>
     <script type="text/javascript" src="lib/loggerInit.js"></script>
-    <script type="text/javascript" src="node_modules/pliny/pliny.min.js"></script>
+    <script type="text/javascript" src="lib/promise.js"></script>
+    <script type="text/javascript" src="lib/Element.details.js"></script>
+    <script type="text/javascript" src="node_modules/pliny/pliny.js"></script>
     <script type="text/javascript" src="lib/sha512.js"></script>
     <script type="text/javascript" src="node_modules/socket.io-client/socket.io.js"></script>
     <script type="text/javascript" src="node_modules/three/three.js"></script>
     <script type="text/javascript" src="node_modules/three/examples/js/loaders/OBJLoader.js"></script>
     <script type="text/javascript" src="node_modules/three/examples/js/loaders/MTLLoader.js"></script>
-    <script type="text/javascript" src="lib/webgl-debug.js"></script>
     <script type="text/javascript" src="src/index.js"></script>
     <script type="text/javascript" src="src/base/axis.js"></script>
     <script type="text/javascript" src="src/base/box.js"></script>
@@ -62,9 +62,9 @@
     <script type="text/javascript" src="src/fx/Button.js"></script>
     <script type="text/javascript" src="src/fx/ButtonFactory.js"></script>
     <script type="text/javascript" src="src/fx/Entity.js"></script>
+    <script type="text/javascript" src="src/fx/InputProcessor.js"></script>
     <script type="text/javascript" src="src/fx/Keys.js"></script>
     <script type="text/javascript" src="src/fx/ModelLoader.js"></script>
-    <script type="text/javascript" src="src/fx/NetworkedInput.js"></script>
     <script type="text/javascript" src="src/fx/Projector.js"></script>
     <script type="text/javascript" src="src/fx/Surface.js"></script>
     <script type="text/javascript" src="src/fx/WebRTCSocket.js"></script>
@@ -85,7 +85,6 @@
     <script type="text/javascript" src="src/fx/HTTP/post.js"></script>
     <script type="text/javascript" src="src/fx/HTTP/sendObject.js"></script>
     <script type="text/javascript" src="src/fx/HTTP/XHR.js"></script>
-    <script type="text/javascript" src="src/fx/input/ButtonAndAxis.js"></script>
     <script type="text/javascript" src="src/fx/input/Camera.js"></script>
     <script type="text/javascript" src="src/fx/input/FPSInput.js"></script>
     <script type="text/javascript" src="src/fx/input/Gamepad.js"></script>
@@ -97,6 +96,7 @@
     <script type="text/javascript" src="src/fx/input/Speech.js"></script>
     <script type="text/javascript" src="src/fx/input/Touch.js"></script>
     <script type="text/javascript" src="src/fx/input/VR.js"></script>
+    <script type="text/javascript" src="src/fx/input/VRDisplayPolyfill.js"></script>
     <script type="text/javascript" src="src/fx/output/Audio3D.js"></script>
     <script type="text/javascript" src="src/fx/output/HapticGlove.js"></script>
     <script type="text/javascript" src="src/fx/output/Music.js"></script>
@@ -149,9 +149,9 @@
         top:0;
       }
       
-    </style><!-- end main.jade head block -->
+    </style>
   </head>
-  <body><!-- start main.jade banner block --><!-- end main.jade banner block -->
+  <body>
     <header role="banner"><a id="logo" href=""><img src="images/primrose32.png" alt="logo" title="Primrose logo"></a>
       <nav role="navigation">
         <ul>
@@ -160,11 +160,11 @@
           <li><a href="doc/">doc/</a></li>
           <li><a href="#dev">download/</a></li>
           <li><a href="#teamInfo">team/</a></li>
-          <li><a href="#mail">contact/</a></li>
           <li><a href="https://github.com/capnmidnight/Primrose/" target="_blank">src/</a></li>
         </ul>
       </nav>
-    </header><!-- start main.jade main block -->
+    </header><!-- start main.jade banner block --><!-- end main.jade banner block -->
+<!-- start main.jade main block -->
     <pre id="editorContainer"></pre>
     <script type="text/javascript">
       "use strict";
@@ -176,7 +176,6 @@
           editorContainer.innerHTML = Primrose.Text.Grammars.JavaScript.toHTML(file);
         });
     </script><!-- end main.jade main block -->
-<!-- start main.jade footer block --><!-- start withFramework.jade footer prepend -->
-    <script type="text/javascript"> if (isInIFrame) { document.querySelector("header").style.display = "none"; }</script><!-- end withFramework.jade footer prepend --><!-- end main.jade footer block -->
+<!-- start main.jade footer block --><!-- end main.jade footer block -->
   </body>
 </html>

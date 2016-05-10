@@ -1,4 +1,3 @@
-/* global pliny, Primrose, devicePixelRatio */
 function scroller(id) {
   document.getElementById(id).scrollIntoView({
     block: "top",
@@ -95,7 +94,7 @@ function replacePreBlocks() {
     for (var i = 0; i < links.length; ++i) {
       var link = links[i],
         url = new URL(link.href);
-      if (url.host !== document.location.host || url.pathname !== document.location.pathname) {
+      if (url.host !== document.location.host) {
         link.target = "_blank";
       }
     }
@@ -169,7 +168,8 @@ function replacePreBlocks() {
     }
 
     promise
-      .catch(function () {
+      .catch(function (err) {
+        console.error(err);
         return "Not found: " + page;
       })
       .then(function (html) {
@@ -251,6 +251,9 @@ function replacePreBlocks() {
     nav.innerHTML += output;
     showHash();
     search.call(docSearch);
+    if (isMobile) {
+      document.querySelector("#contents > details").open = false;
+    }
   }
 
   // Setup the navigation events

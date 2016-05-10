@@ -21,17 +21,17 @@
 <!-- start main.jade title block --><!-- start documentation.jade title block -->
     <meta property="og:title" content="Primrose VR: WebVR Application Framework Documentation">
     <meta name="twitter:title" content="Primrose VR: WebVR Application Framework Documentation">
-    <title>Primrose VR: WebVR Application Framework Documentation</title><!-- end documentation.jade title block --><!-- end main.jade title block -->
-<!-- start main.jade head block --><!-- start withFramework.jade head append -->
-    <script type="text/javascript" src="../node_modules/logger/logger.min.js"></script>
+    <title>Primrose VR: WebVR Application Framework Documentation</title><!-- end documentation.jade title block --><!-- end main.jade title block --><!-- start withFramework.jade head append -->
+    <script type="text/javascript" src="../node_modules/logger/logger.js"></script>
     <script type="text/javascript" src="../lib/loggerInit.js"></script>
-    <script type="text/javascript" src="../node_modules/pliny/pliny.min.js"></script>
+    <script type="text/javascript" src="../lib/promise.js"></script>
+    <script type="text/javascript" src="../lib/Element.details.js"></script>
+    <script type="text/javascript" src="../node_modules/pliny/pliny.js"></script>
     <script type="text/javascript" src="../lib/sha512.js"></script>
     <script type="text/javascript" src="../node_modules/socket.io-client/socket.io.js"></script>
     <script type="text/javascript" src="../node_modules/three/three.js"></script>
     <script type="text/javascript" src="../node_modules/three/examples/js/loaders/OBJLoader.js"></script>
     <script type="text/javascript" src="../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
-    <script type="text/javascript" src="../lib/webgl-debug.js"></script>
     <script type="text/javascript" src="../src/index.js"></script>
     <script type="text/javascript" src="../src/base/axis.js"></script>
     <script type="text/javascript" src="../src/base/box.js"></script>
@@ -62,9 +62,9 @@
     <script type="text/javascript" src="../src/fx/Button.js"></script>
     <script type="text/javascript" src="../src/fx/ButtonFactory.js"></script>
     <script type="text/javascript" src="../src/fx/Entity.js"></script>
+    <script type="text/javascript" src="../src/fx/InputProcessor.js"></script>
     <script type="text/javascript" src="../src/fx/Keys.js"></script>
     <script type="text/javascript" src="../src/fx/ModelLoader.js"></script>
-    <script type="text/javascript" src="../src/fx/NetworkedInput.js"></script>
     <script type="text/javascript" src="../src/fx/Projector.js"></script>
     <script type="text/javascript" src="../src/fx/Surface.js"></script>
     <script type="text/javascript" src="../src/fx/WebRTCSocket.js"></script>
@@ -85,7 +85,6 @@
     <script type="text/javascript" src="../src/fx/HTTP/post.js"></script>
     <script type="text/javascript" src="../src/fx/HTTP/sendObject.js"></script>
     <script type="text/javascript" src="../src/fx/HTTP/XHR.js"></script>
-    <script type="text/javascript" src="../src/fx/input/ButtonAndAxis.js"></script>
     <script type="text/javascript" src="../src/fx/input/Camera.js"></script>
     <script type="text/javascript" src="../src/fx/input/FPSInput.js"></script>
     <script type="text/javascript" src="../src/fx/input/Gamepad.js"></script>
@@ -97,6 +96,7 @@
     <script type="text/javascript" src="../src/fx/input/Speech.js"></script>
     <script type="text/javascript" src="../src/fx/input/Touch.js"></script>
     <script type="text/javascript" src="../src/fx/input/VR.js"></script>
+    <script type="text/javascript" src="../src/fx/input/VRDisplayPolyfill.js"></script>
     <script type="text/javascript" src="../src/fx/output/Audio3D.js"></script>
     <script type="text/javascript" src="../src/fx/output/HapticGlove.js"></script>
     <script type="text/javascript" src="../src/fx/output/Music.js"></script>
@@ -137,9 +137,9 @@
     <script type="text/javascript" src="../src/fx/text/operating_systems/Windows.js"></script>
     <script type="text/javascript" src="../src/fx/text/themes/Dark.js"></script>
     <script type="text/javascript" src="../src/fx/text/themes/Default.js"></script><!-- end withFramework.jade head append --><!-- start documentation.jade head append -->
-    <link rel="stylesheet" type="text/css" href="style.css"><!-- end documentation.jade head append --><!-- end main.jade head block -->
+    <link rel="stylesheet" type="text/css" href="style.css"><!-- end documentation.jade head append -->
   </head>
-  <body><!-- start main.jade banner block --><!-- end main.jade banner block -->
+  <body>
     <header role="banner"><a id="logo" href="../"><img src="../images/primrose32.png" alt="logo" title="Primrose logo"></a>
       <nav role="navigation">
         <ul>
@@ -148,17 +148,16 @@
           <li><a href="../doc/">doc/</a></li>
           <li><a href="../#dev">download/</a></li>
           <li><a href="../#teamInfo">team/</a></li>
-          <li><a href="../#mail">contact/</a></li>
           <li><a href="https://github.com/capnmidnight/Primrose/" target="_blank">src/</a></li>
         </ul>
       </nav>
-    </header><!-- start main.jade main block --><!-- start documentation.jade main block -->
+    </header><!-- start main.jade banner block --><!-- end main.jade banner block -->
+<!-- start main.jade main block --><!-- start documentation.jade main block -->
     <main>
       <div id="top"></div>
       <div id="contents">
-        <h1><a href="../doc/">Primrose VR</a></h1>
-        <input id="docSearch" type="search" placeholder="Filter">
         <details open>
+          <input id="docSearch" type="search" placeholder="Filter">
           <summary>Table of contents</summary>
           <nav>
             <ul>
@@ -167,9 +166,9 @@
                 <ul>
                   <li><a href="https://www.github.com/capnmidnight/Primrose" target="_blank">Source code on GitHub</a></li>
                   <li><a href="https://trello.com/b/NVZsaC1P/primrosevr" target="_blank">Issues on Trello</a></li>
-                  <li><a href="#LICENSE.md">LICENSE</a></li>
-                  <li><a href="#CHANGELOG.md">CHANGELOG</a></li>
-                  <li><a href="#CONTRIBUTORS.md">CONTRIBUTORS</a></li>
+                  <li><a href="index.html#LICENSE.md">LICENSE</a></li>
+                  <li><a href="index.html#CHANGELOG.md">CHANGELOG</a></li>
+                  <li><a href="index.html#CONTRIBUTORS.md">CONTRIBUTORS</a></li>
                 </ul>
               </li>
               <li>
@@ -179,7 +178,7 @@
                   <li data-name="Example: Live programming in Virtual Reality"><a href="../doc/editorVR.html">Example: Live programming in Virtual Reality</a></li>
                   <li data-name="Example: Empty"><a href="../doc/empty.html">Example: Empty</a></li>
                   <li data-name="Example: Haptic glove interaction"><a href="../doc/glove.html">Example: Haptic glove interaction</a></li>
-                  <li data-name="Example: Jabbar Yabs"><a href="../doc/jabbers.html">Example: Jabbar Yabs</a></li>
+                  <li data-name="Example: Jabber Yabs"><a href="../doc/jabbers.html">Example: Jabber Yabs</a></li>
                   <li data-name="Example: Drum Machine"><a href="../doc/music.html">Example: Drum Machine</a></li>
                   <li data-name="Example: New York Public Library Search"><a href="../doc/nypl.html">Example: New York Public Library Search</a></li>
                   <li data-name="Example: Procedurally generated room"><a href="../doc/temple.html">Example: Procedurally generated room</a></li>
@@ -232,15 +231,15 @@
           gulp
           
         </tt>
-        <p>From there, you may copy the <code>Primrose.min.js</code> file out of the <code>scripts/</code> directory into your private project directory, or run the command <kbd>npm start</kbd> to run a copy of this website and try Primrose out right away.</p>
+        <p>From there, you may copy the <code>Primrose.min.js</code> file into your private project directory, or run the command <kbd>npm start</kbd> to run a copy of this website and try Primrose out right away.</p>
         <h2>Manual Installation</h2>
         <p>Manual installation is a bit more difficult than automatic installation, but does not require you to keep a copy of the entire Primrose repository or build new packages. Manual installation will require you to install the dependencies on your own. See the final section "Dependencies" in this document.</p>
         <h3>Direct Link to Latest Version of Primrose</h3>
         <p>If you opt for manually installing Primrose, you will also have to manually install its dependencies. This will require visiting each of the links in the "Dependencies" section above and download their associated files manually.</p>
         <p>The latest version of Primrose will always reside at:</p>
         <ul>
-          <li> <a href="http://www.primrosevr.com/scripts/Primrose.js">http://www.primrosevr.com/scripts/Primrose.js</a>- expanded version.</li>
-          <li><a href="http://www.primrosevr.com/scripts/Primrose.min.js">http://www.primrosevr.com/scripts/Primrose.min.js</a>- minified version.</li>
+          <li> <a href="http://www.primrosevr.com/Primrose.js">http://www.primrosevr.com/Primrose.js</a>- expanded version.</li>
+          <li><a href="http://www.primrosevr.com/Primrose.min.js">http://www.primrosevr.com/Primrose.min.js</a>- minified version.</li>
         </ul>
         <blockquote>NOTE: this file is volatile. Whenever new versions are released, this file will get updated automatically. Major-version releases may result in breaking, backwards-incompatible changes. If you're excited to use only the latest-and-greatest code and are regularly testing and keeping up with changes, use this "Latest" version of the file. If, on the other hand, you need more stability, read further on this page to see how you can use a static version of the package.</blockquote>
         <p>Link to the file by including a <code>&lt;script></code> tag in your page HTML:</p>
@@ -254,7 +253,7 @@
     &lt;script type="text/javascript" src="http://www.threejs.org/build/three.min.js">&lt;/script>
 
     &lt;!-- START: INCLUDE PRIMROSE LIBRARY -->
-    &lt;script type="text/javascript" src="http://www.primrosevr.com/scripts/Primrose.min.js">&lt;/script>
+    &lt;script type="text/javascript" src="http://www.primrosevr.com/Primrose.min.js">&lt;/script>
     &lt;!-- END: INCLUDE PRIMROSE LIBRARY -->
 
     &lt;link type="text/css" rel="stylesheet" href="style.css">
@@ -298,8 +297,7 @@
         <p>Each of these dependencies has their own installation and setup instructions. However, when cloning Primrose from GitHub and using the build tools, NPM (Node Package Manager) can automatically manage these for you.</p><!-- end documentation.jade documentation block -->
       </div>
     </main><!-- end documentation.jade main block --><!-- end main.jade main block -->
-<!-- start main.jade footer block --><!-- start withFramework.jade footer prepend -->
-    <script type="text/javascript"> if (isInIFrame) { document.querySelector("header").style.display = "none"; }</script><!-- end withFramework.jade footer prepend -->
+<!-- start main.jade footer block -->
     <script type="text/javascript" async defer src="app.js"></script><!-- end main.jade footer block -->
   </body>
 </html>

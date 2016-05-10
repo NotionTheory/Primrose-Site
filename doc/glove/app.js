@@ -1,12 +1,12 @@
-/* global Primrose, THREE */
-
 THREE.ImageLoader.crossOrigin = "anonymous";
 var DEBUG_VR = false,
-    app = new Primrose.BrowserEnvironment(
-        "glove demo", {
+    app = new Primrose.BrowserEnvironment("glove demo", {
           sceneModel: "models/scene5.json",
           skyTexture: "images/bg2.jpg",
           groundTexture: "images/deck.png",
+          fullScreenIcon: "models/monitor.obj",
+          VRIcon: "models/cardboard.obj",
+          font: "fonts/helvetiker_regular.typeface.js",
           button: {
             model: "models/smallbutton.json",
             options: {

@@ -1,7 +1,3 @@
-*{
-  box-sizing: border-box;
-}
-
 html, body{
   position: absolute;
   margin:0;
@@ -9,7 +5,7 @@ html, body{
   width: 100%;
   height: 100%;
 }
-body{
+body, button, input{
   font-family: -apple-system, '.SFNSText-Regular', 'San Francisco', 'Roboto', 'Segoe UI', 'Helvetica Neue', 'Lucida Grande', sans-serif;
 }
 
@@ -18,6 +14,11 @@ body{
 }
 #documentation nav, #documentation nav a {
   color: #853B9E;
+}
+
+button {
+  padding: 0.5em;
+  margin-right: 0.25em;
 }
 
 #documentation nav > ul::before {
@@ -128,7 +129,7 @@ h2, h3, h4{
 }
 
 #documentation a[target="_blank"]::after{
-  content: " ⇗";
+  content: " \21d7";
 }
 
 #documentation article h1 {
@@ -302,6 +303,7 @@ a {
 
 #docSearch{
   padding: 0.5em;
+  margin-top: 1em;
 }
 
 details > summary {

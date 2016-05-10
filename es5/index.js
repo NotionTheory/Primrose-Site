@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global pliny, Primrose, THREE */
-
 var setFalse = function setFalse(evt) {
   return evt.returnValue = false;
 };
@@ -165,21 +163,6 @@ window.Primrose = function () {
     return parseInt(s.substring(1), 16);
   });
 
-  pliny.function({
-    parent: "Primrose",
-    name: "loadTexture",
-    description: "Load a texture! Reads the THREE.ImageUtils.crossOrigin property to configure the Cross-Origin policy.",
-    paramters: [{ name: "url", type: "String", description: "The URL of the image to load as a texture." }, { name: "onLoad", type: "Function", description: "A callback for when the texture loads successfully." }, { name: "onProgress", type: "Function", description: "A callback for when the progress is made on loading the texture." }, { name: "onError", type: "Function", description: "A callback for if the texture fails to load." }]
-  });
-  var textureLoader = null;
-  Primrose.loadTexture = function (url) {
-    textureLoader = textureLoader || new THREE.TextureLoader();
-    textureLoader.setCrossOrigin(THREE.ImageUtils.crossOrigin);
-    return new Promise(function (resolve, reject) {
-      return textureLoader.load(url, resolve, null, reject);
-    });
-  };
-
   pliny.value({
     name: "isHomeScreen",
     type: "Boolean",
@@ -288,6 +271,30 @@ Explorer. Once the bane of every web developer's existence, it has since passed\
 the torch on to Safari in all of its many useless incarnations."
   });
   window.isIE = /*@cc_on!@*/false || !!document.documentMode;
+
+  pliny.value({
+    parent: "Primrose",
+    name: "RESOLUTION_SCALES",
+    description: "Scaling factors for changing the resolution of the display when the render quality level changes."
+  });
+  Primrose.RESOLUTION_SCALES = [0.5, 0.25, 0.333333, 0.5, 1];
+  if (!isMobile) {
+    Primrose.RESOLUTION_SCALES.push(2);
+  }
+
+  pliny.enumeration({
+    parent: "Primrose",
+    name: "Quality",
+    description: "Graphics quality settings."
+  });
+  Primrose.Quality = {
+    NONE: 0,
+    VERYLOW: 1,
+    LOW: 2,
+    MEDIUM: 3,
+    HIGH: 4,
+    MAXIMUM: Primrose.RESOLUTION_SCALES.length - 1
+  };
 
   return Primrose;
 }();

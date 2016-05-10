@@ -1,7 +1,5 @@
 "use strict";
 
-/* global Primrose, Window, pliny */
-
 Primrose.Output.Music = function () {
 
   /* polyfill */
@@ -50,7 +48,6 @@ Primrose.Output.Music = function () {
       }
     } else {
       this.available = false;
-      IS_IN_GRID = true;
     }
   }
 

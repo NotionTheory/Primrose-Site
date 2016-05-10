@@ -1,5 +1,3 @@
-/* global pliny */
-
 pliny.function({
   name: "copyObject",
   description: "| [under construction]"
@@ -24,15 +22,6 @@ function copyObject ( dest, source ) {
       }
     }
   }
-}
-
-pliny.function({
-  name: "inherit",
-  description: "| [under construction]"
-} );
-function inherit ( classType, parentType ) {
-  classType.prototype = Object.create( parentType.prototype );
-  classType.prototype.constructor = classType;
 }
 
 

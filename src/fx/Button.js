@@ -1,9 +1,8 @@
-/* global Primrose, THREE, emit, pliny */
-
 Primrose.Button = ( function () {
   pliny.class({
     parent: "Primrose",
     name: "Button",
+    baseClass: "Primrose.BaseControl",
     parameters: [
       {name: "model", type: "THREE.Object3D", description: "A 3D model to use as the graphics for this button."},
       {name: "name", type: "String", description: "A name for the button, to make it distinct from other buttons."},

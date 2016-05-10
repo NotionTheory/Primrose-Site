@@ -1,5 +1,3 @@
-/* global Primrose, Window, pliny */
-
 Primrose.Output.Audio3D = (function () {
 
   // polyfill
@@ -61,19 +59,18 @@ Primrose.Output.Audio3D = (function () {
       this.isAvailable = true;
     }
     catch (exp) {
+      console.error(exp);
+      console.error("AudioContext not available.");
       this.isAvailable = false;
-      this.setPosition = function () {
+      this.setPlayer = function () {
       };
       this.setVelocity = function () {
-      };
-      this.setOrientation = function () {
       };
       this.start = function () {
       };
       this.stop = function () {
       };
       this.error = exp;
-      console.error("AudioContext not available. Reason: ", exp.message);
     }
   }
 
@@ -99,7 +96,10 @@ Primrose.Output.Audio3D = (function () {
     }
     else {
       return this.loadURL(srcs[index])
-        .catch(() => setTimeout(this.loadURLCascadeSrcList(this, srcs, index + 1), 0));
+        .catch((err) => {
+          console.error(err);
+          return this.loadURLCascadeSrcList(srcs, index + 1);
+        });
     }
   };
 
