@@ -12,24 +12,25 @@
   pathX = /.*\/(.*).js/;
 
 gulp.task("copy:primrose", function () {
-  return gulp.src([
-    "node_modules/primrose/*",
-    "!node_modules/primrose/package.json",
-    "node_modules/primrose/doc/**/*",
-    "node_modules/primrose/quickstart/**/*"], { base: "node_modules/primrose" })
+  return gulp.src(primroseInfo.files.map(function (f) {
+    f = "../Primrose/" + f;
+    if (f[f.length - 1] === "/") {
+      f += "**/*";
+    }
+    return f;
+  }).concat(["!../Primrose/httpd.ini", "!../Primrose/lib/**/*", "!../Primrose/src/**/*"]), { base: "../Primrose" })
     .pipe(gulp.dest("."));
 });
 
 gulp.task("cssmin", function () {
   return gulp.src(["stylesheets/*.css", "!stylesheets/*.min.css"])
-    .pipe(data(console.log.bind(console)))
     .pipe(rename({ suffix: ".min" }))
     .pipe(cssmin())
     .pipe(gulp.dest("stylesheets"));
 });
 
 gulp.task("zip:quickstart", ["copy:primrose"], function () {
-  return gulp.src(["quickstart"])
+  return gulp.src(["quickstart/**/*"])
     .pipe(zip("quickstart.zip"))
     .pipe(gulp.dest("."));
 });

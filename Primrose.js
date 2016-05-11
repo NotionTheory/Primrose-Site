@@ -1968,6 +1968,7 @@ Primrose.BrowserEnvironment = function () {
       }, false);
 
       window.addEventListener("vrdisplaypresentchange", modifyScreen, false);
+      FullScreen.addChangeListener(modifyScreen, false);
 
       var isFullScreenMode = function isFullScreenMode() {
         return !!(FullScreen.isActive || _this.inVR);
@@ -2107,7 +2108,7 @@ Primrose.BrowserEnvironment = function () {
       Object.defineProperties(this, {
         inVR: {
           get: function get() {
-            return _this.input.VR && _this.input.VR.currentDisplay && _this.input.VR.currentDisplay.isPresenting;
+            return _this.input && _this.input.VR && _this.input.VR.currentDisplay && _this.input.VR.currentDisplay.isPresenting;
           }
         },
         quality: {
@@ -2118,6 +2119,7 @@ Primrose.BrowserEnvironment = function () {
             if (0 <= v && v < Primrose.RESOLUTION_SCALES.length) {
               quality = v;
               resolutionScale = Primrose.RESOLUTION_SCALES[v];
+              Primrose.Input.VR.CardboardVRDisplay.SUPERSAMPLE = resolutionScale;
             }
             allReady.then(modifyScreen);
           }
@@ -8624,7 +8626,7 @@ Primrose.Input.VR = function () {
 
         var mockedLegacyDisplays = [];
         for (id in displays) {
-          mockedLegacyDisplays.push(new Primrose.Input.VR.LegacyVRDisplay(displays[id]));
+          mockedLegacyDisplays.push(new Primrose.Input.VR.LegacyVRDisplay(displays[id].display, displays[id].sensor));
         }
 
         return enumerateVRDisplays.call(this, elem, mockedLegacyDisplays);
@@ -8770,6 +8772,115 @@ Primrose.Input.VR = function () {
   Primrose.InputProcessor.defineAxisProperties(VR, ["headX", "headY", "headZ", "headVX", "headVY", "headVZ", "headAX", "headAY", "headAZ", "headRX", "headRY", "headRZ", "headRW", "headRVX", "headRVY", "headRVZ", "headRAX", "headRAY", "headRAZ"]);
 
   return VR;
+}();
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+Primrose.Input.VRDisplayPolyfill = function () {
+  "use strict";
+
+  var VRDisplayPolyfill = function () {
+    function VRDisplayPolyfill(canPresent, hasOrientation, hasPosition, displayID, displayName) {
+      var _this = this;
+
+      _classCallCheck(this, VRDisplayPolyfill);
+
+      this.capabilities = {
+        canPresent: canPresent,
+        hasExternalDisplay: false,
+        hasOrientation: hasOrientation,
+        hasPosition: hasPosition
+      };
+
+      this.displayID = displayID;
+      this.displayName = displayName;
+      this.isConnected = true;
+      this.isPresenting = false;
+      this.stageParameters = null;
+
+      this._currentLayer = null;
+
+      this._onFullScreenRemoved = function () {
+        FullScreen.removeChangeListener(_this._onFullScreenRemoved);
+        _this.exitPresent();
+        window.dispatchEvent(new Event("vrdisplaypresentchange"));
+      };
+    }
+
+    _createClass(VRDisplayPolyfill, [{
+      key: "getLayers",
+      value: function getLayers() {
+        if (this._currentLayer) {
+          return [this._currentLayer];
+        } else {
+          return [];
+        }
+      }
+    }, {
+      key: "exitPresent",
+      value: function exitPresent() {
+        var _this2 = this;
+
+        var clear = function clear(err) {
+          if (err) {
+            console.error(err);
+          }
+          console.log("exit presenting");
+          _this2.isPresenting = false;
+          _this2._currentLayer = null;
+        };
+        return FullScreen.exit().then(function (elem) {
+          clear();
+          return elem;
+        }).catch(clear);
+      }
+    }, {
+      key: "requestPresent",
+      value: function requestPresent(layers) {
+        var _this3 = this;
+
+        if (!this.capabilities.canPresent) {
+          return Promrise.reject(new Error("This device cannot be used as a presentation display. DisplayID: " + this.displayId + ". Name: " + this.displayName));
+        } else if (!layers) {
+          return Promise.reject(new Error("No layers provided to requestPresent"));
+        } else if (!(layers instanceof Array)) {
+          return Promise.reject(new Error("Layers parameters must be an array"));
+        } else if (layers.length !== 1) {
+          return Promise.reject(new Error("Only one layer at a time is supported right now."));
+        } else if (!layers[0].source) {
+          return Promise.reject(new Error("No source on layer parameter."));
+        } else {
+          return this._requestPresent(layers).then(function (elem) {
+            _this3._currentLayer = layers[0];
+            _this3.isPresenting = elem === _this3._currentLayer.source;
+            FullScreen.addChangeListener(_this3._onFullScreenRemoved, false);
+            window.dispatchEvent(new Event("vrdisplaypresentchange"));
+            return elem;
+          });
+        }
+      }
+    }, {
+      key: "requestAnimationFrame",
+      value: function requestAnimationFrame(thunk) {
+        window.requestAnimationFrame(thunk);
+      }
+    }, {
+      key: "cancelAnimationFrame",
+      value: function cancelAnimationFrame(handle) {
+        window.cancelAnimationFrame(handle);
+      }
+    }, {
+      key: "submitFrame",
+      value: function submitFrame() {}
+    }]);
+
+    return VRDisplayPolyfill;
+  }();
+
+  return VRDisplayPolyfill;
 }();
 "use strict";
 
@@ -10194,267 +10305,185 @@ Primrose.Text.Token = function () {
 }();
 "use strict";
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 Primrose.Input.VR.CardboardVRDisplay = function () {
-  function CardboardVRDisplay() {
-    var _this = this;
+  "use strict";
 
-    this.capabilities = {
-      canPresent: true,
-      hasExternalDisplay: false,
-      hasOrientation: isMobile,
-      hasPosition: false
-    };
+  var CardboardVRDisplay = function (_Primrose$Input$VRDis) {
+    _inherits(CardboardVRDisplay, _Primrose$Input$VRDis);
 
-    var corrector = new Primrose.Input.VR.MotionCorrector(),
-        currentPose = null,
-        frameID = 0,
-        currentLayer = null;
+    function CardboardVRDisplay() {
+      _classCallCheck(this, CardboardVRDisplay);
 
-    this.displayId = "B4CEAE28-1A89-4314-872E-9C223DDABD02";
-    this.displayName = "Device Motion API";
-    this.isConnected = true;
-    this.isPresenting = false;
-    this.stageParameters = null;
+      var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(CardboardVRDisplay).call(this, true, isMobile, false, "B4CEAE28-1A89-4314-872E-9C223DDABD02", "Device Motion API"));
 
-    this.getEyeParameters = function (side) {
-      var dEye = side === "left" ? -1 : 1;
+      var corrector = new Primrose.Input.VR.MotionCorrector(),
+          currentPose = null,
+          frameID = 0;
 
-      return {
-        renderWidth: Math.floor(screen.width * devicePixelRatio / 2) * CardboardVRDisplay.SUPERSAMPLE,
-        renderHeight: screen.height * devicePixelRatio * CardboardVRDisplay.SUPERSAMPLE,
-        offset: new Float32Array([dEye * 0.03, 0, 0]),
-        fieldOfView: {
-          upDegrees: 40,
-          downDegrees: 40,
-          leftDegrees: 40,
-          rightDegrees: 40
-        }
+      _this.getEyeParameters = function (side) {
+        var dEye = side === "left" ? -1 : 1;
+
+        return {
+          renderWidth: Math.floor(screen.width * devicePixelRatio / 2) * CardboardVRDisplay.SUPERSAMPLE,
+          renderHeight: screen.height * devicePixelRatio * CardboardVRDisplay.SUPERSAMPLE,
+          offset: new Float32Array([dEye * 0.03, 0, 0]),
+          fieldOfView: {
+            upDegrees: 40,
+            downDegrees: 40,
+            leftDegrees: 40,
+            rightDegrees: 40
+          }
+        };
       };
-    };
 
-    corrector.addEventListener("deviceorientation", function (evt) {
-      currentPose = {
-        timestamp: performance.now(),
-        frameID: ++frameID,
-        orientation: new Float32Array(evt.toArray())
+      corrector.addEventListener("deviceorientation", function (evt) {
+        currentPose = {
+          timestamp: performance.now(),
+          frameID: ++frameID,
+          orientation: new Float32Array(evt.toArray())
+        };
+      });
+
+      _this.getImmediatePose = function () {
+        return currentPose;
       };
-    });
 
-    this.getImmediatePose = function () {
-      return currentPose;
-    };
-
-    this.getPose = function () {
-      return currentPose;
-    };
-
-    this.resetPose = corrector.zeroAxes.bind(corrector);
-
-    this.getLayers = function () {
-      return [currentLayer];
-    };
-
-    this._onFullScreenRemoved = function () {
-      console.log("exiting cardboard presentation");
-      FullScreen.removeChangeListener(_this._onFullScreenRemoved);
-      _this.exitPresent();
-      window.dispatchEvent(new Event("vrdisplaypresentchange"));
-    };
-
-    this.requestPresent = function (layers) {
-      if (!_this.capabilities.canPresent) {
-        return Promrise.reject(new Error("This device cannot be used as a presentation display. DisplayID: " + _this.displayId + ". Name: " + _this.displayName));
-      } else if (!layers) {
-        return Promise.reject(new Error("No layers provided to requestPresent"));
-      } else if (!(layers instanceof Array)) {
-        return Promise.reject(new Error("Layers parameters must be an array"));
-      } else if (layers.length !== 1) {
-        return Promise.reject(new Error("Only one layer at a time is supported right now."));
-      } else if (!layers[0].source) {
-        return Promise.reject(new Error("No source on layer parameter."));
-      } else {
-        return FullScreen.request(layers[0].source).then(function (elem) {
-          currentLayer = layers[0];
-          _this.isPresenting = elem === currentLayer.source;
-          FullScreen.addChangeListener(_this._onFullScreenRemoved, false);
-          window.dispatchEvent(new Event("vrdisplaypresentchange"));
-          return elem;
-        });
-      }
-    };
-
-    this.exitPresent = function () {
-      var _this2 = this;
-
-      var clear = function clear(err) {
-        if (err) {
-          console.error(err);
-        }
-        console.log("exit presenting");
-        _this2.isPresenting = false;
-        currentLayer = null;
+      _this.getPose = function () {
+        return currentPose;
       };
-      return FullScreen.exit().then(function (elem) {
-        clear();
-        return elem;
-      }).catch(clear);
-    };
-  }
+
+      _this.resetPose = corrector.zeroAxes.bind(corrector);
+
+      _this._requestPresent = function (layers) {
+        return FullScreen.request(layers[0].source);
+      };
+      return _this;
+    }
+
+    return CardboardVRDisplay;
+  }(Primrose.Input.VRDisplayPolyfill);
 
   CardboardVRDisplay.SUPERSAMPLE = 1;
-
-  CardboardVRDisplay.prototype.requestAnimationFrame = window.requestAnimationFrame.bind(window);
-  CardboardVRDisplay.prototype.cancelAnimationFrame = window.cancelAnimationFrame.bind(window);
-
-  CardboardVRDisplay.prototype.submitFrame = function () {};
 
   return CardboardVRDisplay;
 }();
 "use strict";
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 Primrose.Input.VR.LegacyVRDisplay = function () {
-  function LegacyVRDisplay(device) {
-    var _this = this;
+  "use strict";
 
-    this.capabilities = {
-      canPresent: !!device.display,
-      hasExternalDisplay: false,
-      hasOrientation: !!device.sensor,
-      hasPosition: !!device.sensor && !isMobile
-    };
-
-    this.displayId = device.display.hardwareUnitId;
-
-    this.displayName = "";
-    var a = device.display.deviceName,
-        b = device.sensor.deviceName;
+  function makeDisplayName(legacyDisplay, legacySensor) {
+    var displayName = "";
+    var a = legacyDisplay.deviceName,
+        b = legacySensor.deviceName;
     for (var i = 0; i < a.length && i < b.length && a[i] === b[i]; ++i) {
-      this.displayName += a[i];
+      displayName += a[i];
     }
-    while (this.displayName.length > 0 && !/\w/.test(this.displayName[this.displayName.length - 1])) {
-      this.displayName = this.displayName.substring(0, this.displayName.length - 1);
+    while (displayName.length > 0 && !/\w/.test(displayName[displayName.length - 1])) {
+      displayName = displayName.substring(0, displayName.length - 1);
     }
-
-    this.isConnected = true;
-    this.isPresenting = false;
-    this.stageParameters = null;
-
-    this.getEyeParameters = function (side) {
-      var oldFormat = null;
-      if (device.display.getEyeParameters) {
-        oldFormat = device.display.getEyeParameters(side);
-      } else {
-        oldFormat = {
-          renderRect: device.display.getRecommendedEyeRenderRect(side),
-          eyeTranslation: device.display.getEyeTranslation(side),
-          recommendedFieldOfView: device.display.getRecommendedEyeFieldOfView(side)
-        };
-      }
-
-      var newFormat = {
-        renderWidth: oldFormat.renderRect.width,
-        renderHeight: oldFormat.renderRect.height,
-        offset: new Float32Array([oldFormat.eyeTranslation.x, oldFormat.eyeTranslation.y, oldFormat.eyeTranslation.z]),
-        fieldOfView: oldFormat.recommendedFieldOfView
-      };
-
-      return newFormat;
-    };
-    var frameID = 0;
-    function createPoseFromState(state) {
-      var pose = {
-        timestamp: state.timestamp,
-        frameID: ++frameID
-      };
-      if (state.position) {
-        pose.position = new Float32Array([state.position.x, state.position.y, state.position.z]);
-      }
-      if (state.linearVelocity) {
-        pose.linearVelocity = new Float32Array([state.linearVelocity.x, state.linearVelocity.y, state.linearVelocity.z]);
-      }
-      if (state.linearAcceleration) {
-        pose.linearAcceleration = new Float32Array([state.linearAcceleration.x, state.linearAcceleration.y, state.linearAcceleration.z]);
-      }
-      if (state.orientation) {
-        pose.orientation = new Float32Array([state.orientation.x, state.orientation.y, state.orientation.z, state.orientation.w]);
-      }
-      if (state.angularVelocity) {
-        pose.angularVelocity = new Float32Array([state.angularVelocity.x, state.angularVelocity.y, state.angularVelocity.z]);
-      }
-      if (state.angularAcceleration) {
-        pose.angularAcceleration = new Float32Array([state.angularAcceleration.x, state.angularAcceleration.y, state.angularAcceleration.z]);
-      }
-      return pose;
-    }
-
-    this.getImmediatePose = function () {
-      return createPoseFromState(device.sensor.getImmediateState());
-    };
-
-    this.getPose = function () {
-      return createPoseFromState(device.sensor.getState());
-    };
-
-    this.resetPose = device.sensor.resetSensor.bind(device.sensor);
-
-    var currentLayer = null;
-
-    this.getLayers = function () {
-      return [currentLayer];
-    };
-
-    this._onFullScreenRemoved = function () {
-      FullScreen.removeChangeListener(_this._onFullScreenRemoved);
-      _this.exitPresent();
-      window.dispatchEvent(new Event("vrdisplaypresentchange"));
-    };
-
-    this.requestPresent = function (layers) {
-      if (!_this.capabilities.canPresent) {
-        return Promrise.reject(new Error("This device cannot be used as a presentation display. DisplayID: " + _this.displayId + ". Name: " + _this.displayName));
-      } else if (!layers) {
-        return Promise.reject(new Error("No layers provided to requestPresent"));
-      } else if (!(layers instanceof Array)) {
-        return Promise.reject(new Error("Layers parameters must be an array"));
-      } else if (layers.length !== 1) {
-        return Promise.reject(new Error("Only one layer at a time is supported right now."));
-      } else if (!layers[0].source) {
-        return Promise.reject(new Error("No source on layer parameter."));
-      } else {
-        return FullScreen.request(layers[0].source, {
-          vrDisplay: device.display,
-          vrDistortion: true
-        }).then(function (elem) {
-          currentLayer = layers[0];
-          _this.isPresenting = elem === currentLayer.source;
-          FullScreen.addChangeListener(_this._onFullScreenRemoved, false);
-          window.dispatchEvent(new Event("vrdisplaypresentchange"));
-          return elem;
-        });
-      }
-    };
-
-    this.exitPresent = function () {
-      var _this2 = this;
-
-      var clear = function clear(err) {
-        if (err) {
-          console.error(err);
-        }
-        console.log("exit presenting");
-        _this2.isPresenting = false;
-        currentLayer = null;
-      };
-      return FullScreen.exit().then(function (elem) {
-        clear();
-        return elem;
-      }).catch(clear);
-    };
+    return displayName;
   }
 
-  LegacyVRDisplay.prototype.requestAnimationFrame = window.requestAnimationFrame.bind(window);
-  LegacyVRDisplay.prototype.cancelAnimationFrame = window.cancelAnimationFrame.bind(window);
-  LegacyVRDisplay.prototype.submitFrame = function () {};
+  var frameID = 0;
+  function createPoseFromState(state) {
+    var pose = {
+      timestamp: state.timestamp,
+      frameID: ++frameID,
+      position: null,
+      linearVelocity: null,
+      linearAcceleration: null,
+      orientation: null,
+      angularVelocity: null,
+      angularAcceleration: null
+    };
+
+    if (state.position) {
+      pose.position = new Float32Array([state.position.x, state.position.y, state.position.z]);
+    }
+    if (state.linearVelocity) {
+      pose.linearVelocity = new Float32Array([state.linearVelocity.x, state.linearVelocity.y, state.linearVelocity.z]);
+    }
+    if (state.linearAcceleration) {
+      pose.linearAcceleration = new Float32Array([state.linearAcceleration.x, state.linearAcceleration.y, state.linearAcceleration.z]);
+    }
+    if (state.orientation) {
+      pose.orientation = new Float32Array([state.orientation.x, state.orientation.y, state.orientation.z, state.orientation.w]);
+    }
+    if (state.angularVelocity) {
+      pose.angularVelocity = new Float32Array([state.angularVelocity.x, state.angularVelocity.y, state.angularVelocity.z]);
+    }
+    if (state.angularAcceleration) {
+      pose.angularAcceleration = new Float32Array([state.angularAcceleration.x, state.angularAcceleration.y, state.angularAcceleration.z]);
+    }
+    return pose;
+  }
+
+  var LegacyVRDisplay = function (_Primrose$Input$VRDis) {
+    _inherits(LegacyVRDisplay, _Primrose$Input$VRDis);
+
+    function LegacyVRDisplay(legacyDisplay, legacySensor) {
+      _classCallCheck(this, LegacyVRDisplay);
+
+      var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(LegacyVRDisplay).call(this, !!legacyDisplay, !!legacySensor, !!legacySensor, legacyDisplay.hardwareUnitId, makeDisplayName(legacyDisplay, legacySensor)));
+
+      _this.getEyeParameters = function (side) {
+        var oldFormat = null;
+        if (legacyDisplay.getEyeParameters) {
+          oldFormat = legacyDisplay.getEyeParameters(side);
+        } else {
+          oldFormat = {
+            renderRect: legacyDisplay.getRecommendedEyeRenderRect(side),
+            eyeTranslation: legacyDisplay.getEyeTranslation(side),
+            recommendedFieldOfView: legacyDisplay.getRecommendedEyeFieldOfView(side)
+          };
+        }
+
+        var newFormat = {
+          renderWidth: oldFormat.renderRect.width,
+          renderHeight: oldFormat.renderRect.height,
+          offset: new Float32Array([oldFormat.eyeTranslation.x, oldFormat.eyeTranslation.y, oldFormat.eyeTranslation.z]),
+          fieldOfView: oldFormat.recommendedFieldOfView
+        };
+
+        return newFormat;
+      };
+
+      _this.getImmediatePose = function () {
+        return createPoseFromState(legacySensor.getImmediateState());
+      };
+
+      _this.getPose = function () {
+        return createPoseFromState(legacySensor.getState());
+      };
+
+      _this.resetPose = legacySensor.resetSensor.bind(legacySensor);
+
+      _this._requestPresent = function (layers) {
+        return FullScreen.request(layers[0].source, {
+          vrDisplay: legacyDisplay,
+          vrDistortion: true
+        });
+      };
+      return _this;
+    }
+
+    return LegacyVRDisplay;
+  }(Primrose.Input.VRDisplayPolyfill);
+
+  ;
   return LegacyVRDisplay;
 }();
 "use strict";
@@ -13005,5 +13034,5 @@ Primrose.Text.Themes.Default = function () {
     }
   };
 }();
-Primrose.VERSION = "v0.23.3";
-console.info("Using Primrose v0.23.3. Find out more at http://www.primrosevr.com");
+Primrose.VERSION = "v0.23.4";
+console.info("Using Primrose v0.23.4. Find out more at http://www.primrosevr.com");
