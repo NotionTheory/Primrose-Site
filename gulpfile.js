@@ -3,7 +3,7 @@
   cssmin = require("gulp-cssmin"),
   data = require("gulp-data"),
   fs = require("fs"),
-  primroseInfo = require("primrose/package.json"),
+  primroseInfo = require("../Primrose/package.json"),
   pug = require("gulp-pug"),
   recurseDirectory = require("./server/recurseDirectory"),
   rename = require("gulp-rename"),
@@ -18,7 +18,11 @@ gulp.task("copy:primrose", function () {
       f += "**/*";
     }
     return f;
-  }).concat(["!../Primrose/httpd.ini", "!../Primrose/lib/**/*", "!../Primrose/src/**/*"]), { base: "../Primrose" })
+  }).concat([
+  "!../Primrose/httpd.ini", 
+  "!../Primrose/StartHere*",
+  "!../Primrose/lib/**/*", 
+  "!../Primrose/src/**/*"]), { base: "../Primrose" })
     .pipe(gulp.dest("."));
 });
 
