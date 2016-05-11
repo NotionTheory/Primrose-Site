@@ -13,6 +13,7 @@
 gulp.task("copy:primrose", function () {
   return gulp.src([
   "node_modules/primrose/*",
+  "!node_modules/primrose/package.json",
   "node_modules/primrose/doc/**/*",
   "node_modules/primrose/quickstart/**/*"], {base: "node_modules/primrose"})
     .pipe(gulp.dest("."));
