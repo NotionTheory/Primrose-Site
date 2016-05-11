@@ -2,6 +2,14 @@
 
 append head
   link(type="text/css", rel="stylesheet", href= fileRoot + "stylesheets/main" + cssExt)
+  script.
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-51171551-1', 'auto');
+    ga('send', 'pageview');
   
 block banner
   section#demo
@@ -21,7 +29,7 @@ block main
 
           p The Primrose Framework helps web developers create virtual reality experiences within standard web browsers on desktop and mobile devices alike. Through its common interaction space, design tools, interface objects, and user experience best-practices, users and developers collaborate to create interactive multimedia and productivity applications.
 
-          p Primrose is free, open source software (#[a(href="https://github.com/capnmidnight/Primrose/blob/master/LICENSE.md", target="_blank") GPLv3]) and may readily be
+          p Primrose is free, open source software (#[a(href=fileRoot + "doc/#LICENSE.md", target="_blank") GPLv3]) and may readily be
             used with other #[a(href="https://en.wikipedia.org/wiki/Free_and_open-source_software", target="_blank") FOSS] projects.
 
         h3 Examples
