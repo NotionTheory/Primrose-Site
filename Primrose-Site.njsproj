@@ -32,9 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="images\md-2016-03.jpg" />
-    <Content Include="templates\documentation.jade" />
     <Content Include="editor2d.html.jade" />
-    <Content Include="templates\demo.jade" />
     <Content Include="images\stm.png" />
     <Content Include="templates\main.jade" />
     <Content Include="index.html.jade" />
@@ -100,7 +98,6 @@
     <Compile Include="server\data\User.js" />
     <Compile Include="server\socketControllers\login.js" />
     <Compile Include="server\socketControllers\peer.js" />
-    <Content Include="templates\withFramework.jade" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>

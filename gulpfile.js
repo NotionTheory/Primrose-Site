@@ -2,6 +2,7 @@
   concat = require("gulp-concat"),
   cssmin = require("gulp-cssmin"),
   data = require("gulp-data"),
+  fs = require("fs"),
   primroseInfo = require("primrose/package.json"),
   pug = require("gulp-pug"),
   recurseDirectory = require("./server/recurseDirectory"),
@@ -12,11 +13,19 @@
 
 gulp.task("copy:primrose", function () {
   return gulp.src([
-  "node_modules/primrose/*",
-  "!node_modules/primrose/package.json",
-  "node_modules/primrose/doc/**/*",
-  "node_modules/primrose/quickstart/**/*"], {base: "node_modules/primrose"})
+    "node_modules/primrose/*",
+    "!node_modules/primrose/package.json",
+    "node_modules/primrose/doc/**/*",
+    "node_modules/primrose/quickstart/**/*"], { base: "node_modules/primrose" })
     .pipe(gulp.dest("."));
+});
+
+gulp.task("cssmin", function () {
+  return gulp.src(["stylesheets/*.css", "!stylesheets/*.min.css"])
+    .pipe(data(console.log.bind(console)))
+    .pipe(rename({ suffix: ".min" }))
+    .pipe(cssmin())
+    .pipe(gulp.dest("stylesheets"));
 });
 
 gulp.task("zip:quickstart", ["copy:primrose"], function () {
@@ -25,8 +34,19 @@ gulp.task("zip:quickstart", ["copy:primrose"], function () {
     .pipe(gulp.dest("."));
 });
 
-gulp.task("pug:site", ["copy:primrose"], function () {
-  return gulp.src(["**/*.jade", "**/*.pug"], { base: "." })
+function fileSize(file) {
+  var size = fs.lstatSync(file).size,
+    labelIndex = 0,
+    sizeLabels = ["B", "KB", "MB", "GB", "TB"];
+  while (size > 1000 && labelIndex < sizeLabels.length) {
+    size /= 1000;
+    ++labelIndex;
+  }
+  return size.toFixed(1) + sizeLabels[labelIndex];
+}
+
+gulp.task("pug:site", function () {
+  return gulp.src(["*.jade"], { base: "." })
     .pipe(rename(function (path) {
       path.extname = "";
       return path;
@@ -36,30 +56,24 @@ gulp.task("pug:site", ["copy:primrose"], function () {
         parts = name.split("/")
           .map(function () {
             return "../";
-          }),
-        shortName = name.match(/([^\/]+)\.html$/),
-        scriptName = name.replace(/\.html$/, "/app.js");
+          });
 
       parts.pop();
-
-      var exists = fs.existsSync(scriptName);
-      txt = exists && fs.readFileSync(scriptName, "utf-8");
 
       callback(null, {
         version: primroseInfo.version,
         filePath: name,
+        cssExt: ".css",
+        jsExt: ".js",
         fileRoot: parts.join(""),
-        fileName: shortName && shortName[1],
-        fileSize: function fileSize(file) {
-          return (fs.lstatSync(file).size / 1000).toFixed(1) + "KB";
-        },
-        docFiles: docFiles,
-        frameworkFiles: defaultData.frameworkFiles,
-        demoScriptName: scriptName,
-        demoScript: exists && ("grammar(\"JavaScript\");\n" + txt)
+        fileSize: fileSize
       });
     }))
-    .pipe(pug(options))
+    .pipe(pug({
+      pretty: true
+    }))
     .on("error", console.error.bind(console, "PUG ERROR"))
     .pipe(gulp.dest("."));
 });
+
+gulp.task("default", ["zip:quickstart", "pug:site", "cssmin"]);

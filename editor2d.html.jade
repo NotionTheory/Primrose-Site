@@ -1,6 +1,8 @@
-﻿extends templates/withFramework.jade
+﻿extends templates/main.jade
 
 append head
+  script(type="text/javascript", src= fileRoot + "PrimroseDependencies.min.js")
+  script(type="text/javascript", src= fileRoot + "Primrose.min.js")
   style.
     html, body, #editorContainer{
       position:absolute;
