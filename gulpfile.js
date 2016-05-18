@@ -35,7 +35,7 @@ gulp.task("cssmin", function () {
 
 gulp.task("zip:quickstart", ["copy:primrose"], function () {
   return gulp.src(["quickstart/**/*"])
-    .pipe(zip("quickstart.zip"))
+    .pipe(zip("PrimroseQuickstart.zip"))
     .pipe(gulp.dest("."));
 });
 
@@ -50,7 +50,7 @@ function fileSize(file) {
   return size.toFixed(1) + sizeLabels[labelIndex];
 }
 
-gulp.task("pug:site", function () {
+gulp.task("pug:site", ["zip:quickstart"], function () {
   return gulp.src(["*.jade"], { base: "." })
     .pipe(rename(function (path) {
       path.extname = "";
@@ -81,4 +81,4 @@ gulp.task("pug:site", function () {
     .pipe(gulp.dest("."));
 });
 
-gulp.task("default", ["zip:quickstart", "pug:site", "cssmin"]);
+gulp.task("default", ["pug:site", "cssmin"]);
