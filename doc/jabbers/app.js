@@ -7,12 +7,12 @@ var WIDTH = 100,
   t = 0,
   jabs = {},
   R = Primrose.Random,
-  app = new Primrose.BrowserEnvironment("Jabber Yabs", {
-    skyTexture: "images/bg2.jpg",
-    groundTexture: "images/grass.png",
-    fullScreenIcon: "models/monitor.obj",
-    VRIcon: "models/cardboard.obj",
-    font: "fonts/helvetiker_regular.typeface.js"
+  env = new Primrose.BrowserEnvironment("Jabber Yabs", {
+    skyTexture: "../images/bg2.jpg",
+    groundTexture: "../images/grass.png",
+    fullScreenIcon: "../models/monitor.obj",
+    VRIcon: "../models/cardboard.obj",
+    font: "../fonts/helvetiker_regular.typeface.js"
   });
 
 // and clicking on the objects in the scene
@@ -21,8 +21,8 @@ function makeJabJump(evt) {
     jabs[evt.objectID].jump(evt.faceNormal);
   }
 }
-app.addEventListener("gazecomplete", makeJabJump);
-app.addEventListener("pointerend", makeJabJump);
+env.addEventListener("gazecomplete", makeJabJump);
+env.addEventListener("pointerend", makeJabJump);
 
 function eye(side, body) {
   var ball = put(textured(sphere(0.05, 6, 3), 0xffffff))
@@ -34,26 +34,25 @@ function eye(side, body) {
 }
 
 function Jabber(w, h, s) {
-  var obj = hub(),
-    skin = R.item(Primrose.SKIN_VALUES),
-    body = put(textured(sphere(0.2, 14, 7), skin)).on(obj).at(
-      R.number(-w, w),
-      1,
-      R.number(-h, h)),
+  var skin = R.item(Primrose.SKIN_VALUES),
+    body = textured(sphere(0.2, 14, 7), skin),
     velocity = v3(
       R.number(-s, s),
       0,
       R.number(-s, s)),
     v = v3(0, 0, 0);
 
+  body.position.set(
+    R.number(-w, w),
+    1,
+    R.number(-h, h))
+
   eye(-1, body);
   eye(1, body);
-
-  obj.body = body;
-
+  
   body.rotation.y = Math.PI;
-  obj.update = function (dt) {
-    velocity.y -= app.options.gravity * dt;
+  body.update = function (dt) {
+    velocity.y -= env.options.gravity * dt;
     body.position.add(v.copy(velocity).multiplyScalar(dt));
     if (velocity.x > 0 && body.position.x >= w ||
       velocity.x < 0 && body.position.x <= -w) {
@@ -67,11 +66,11 @@ function Jabber(w, h, s) {
       velocity.y = 0;
       body.position.y = 1;
     }
-    v.copy(body.position).sub(app.player.position);
+    v.copy(body.position).sub(env.player.position);
     var d = v.length();
     if (d < 3) {
-      body.lookAt(app.player.position);
-      obj.position.set(
+      body.lookAt(env.player.position);
+      body.position.set(
         R.number(-0.01, 0.01),
         R.number(-0.01, 0.01),
         R.number(-0.01, 0.01));
@@ -83,29 +82,29 @@ function Jabber(w, h, s) {
       body.lookAt(v.copy(velocity).add(body.position));
     }
   };
-  obj.jump = function (normal) {
+  body.jump = function (normal) {
     v.fromArray(normal);
-    v.y = app.options.gravity / 2;
+    v.y = env.options.gravity / 2;
     velocity.add(v);
   };
-  return obj;
+  return body;
 }
 
 // Once Primrose has setup the WebGL context, setup Three.js, 
 // downloaded and validated all of model files, and constructed
 // the basic scene hierarchy out of it, the "ready" event is fired,
 // indicating that we may make additional changes to the scene now.
-app.addEventListener("ready", function () {
+env.addEventListener("ready", function () {
   for (var i = 0; i < 25; ++i) {
-    var jab = put(Jabber(
+    var jab = Jabber(
       MIDX / 5,
-      MIDZ / 5, 1)).on(app.scene).at(0, 0, 0);
-    jabs[jab.body.uuid] = jab;
-    app.registerPickableObject(jab.body);
+      MIDZ / 5, 1);
+    jabs[jab.uuid] = jab;
+    env.appendChild(jab);
   }
 });
 
-app.addEventListener("update", function (dt) {
+env.addEventListener("update", function (dt) {
   for (var id in jabs) {
     jabs[id].update(dt);
   }

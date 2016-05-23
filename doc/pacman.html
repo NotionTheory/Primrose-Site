@@ -1,0 +1,238 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="web-app-capable" content="yes"><meta name="theme-color" content="black"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="description" content="A WebVR application framework."><meta name="keywords" content="WebGL, WebVR, HTML5, JavaScript, text editor, source code editor, virtual reality, Primrose"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@Primrose_VR"><meta property="og:site_name" content="Primrose VR"><meta property="og:description" content="Primrose: Framework for WebVR Applications"><meta name="twitter:description" content="Primrose: Framework for WebVR Applications"><meta property="og:url" content="http://www.primrosevr.com/doc/pacman.html"><!-- start main.jade meta block --><meta name="twitter:image" content="http://www.primrosevr.com/images/screenshot.jpg"><meta property="og:image" content="http://www.primrosevr.com/images/screenshot.jpg"><!-- end main.jade meta block -->
+<!-- start main.jade title block --><!-- start documentation.jade title block --><meta property="og:title" content="Primrose VR: WebVR Application Framework Documentation"><meta name="twitter:title" content="Primrose VR: WebVR Application Framework Documentation"><title>Primrose VR: WebVR Application Framework Documentation</title><!-- end documentation.jade title block --><!-- end main.jade title block --><!-- start withFramework.jade head append --><script type="text/javascript" src="../PrimroseDependencies.min.js"></script><script type="text/javascript" src="../Primrose.min.js"></script><!-- end withFramework.jade head append --><!-- start documentation.jade head append --><link rel="stylesheet" type="text/css" href="style.min.css"><script type="text/javascript" src="../PrimroseDocumentation.min.js"></script><!-- end documentation.jade head append --></head><body><header role="banner"><a id="logo" href="../"><img src="../doc/images/primrose32.png" alt="logo" title="Primrose logo"></a><nav role="navigation"><ul><li><a href="../#intro">intro/</a></li><li><a href="../#webvr">webvr/</a></li><li><a href="../doc/">doc/</a></li><li><a href="../#dev">download/</a></li><li><a href="../#teamInfo">team/</a></li><li><a href="https://github.com/capnmidnight/Primrose/" target="_blank">src/</a></li></ul></nav></header><!-- start main.jade banner block --><!-- end main.jade banner block -->
+<!-- start main.jade main block --><!-- start documentation.jade main block --><main><div id="top"></div><div id="contents"><details open><input id="docSearch" type="search" placeholder="Filter"><summary>Table of contents</summary><nav><ul><li><h2>Project</h2><ul><li><a href="https://www.github.com/capnmidnight/Primrose" target="_blank">Source code on GitHub</a></li><li><a href="https://trello.com/b/NVZsaC1P/primrosevr" target="_blank">Issues on Trello</a></li><li><a href="index.html#LICENSE.md">LICENSE</a></li><li><a href="index.html#CHANGELOG.md">CHANGELOG</a></li><li><a href="index.html#CONTRIBUTORS.md">CONTRIBUTORS</a></li></ul></li><li><h2>Examples</h2><ul><li data-name="Commodore PET and Oregon Trail"><a href="../doc/commodore.html">Commodore PET and Oregon Trail</a></li><li data-name="Live programming in Virtual Reality"><a href="../doc/editorVR.html">Live programming in Virtual Reality</a></li><li data-name="Empty"><a href="../doc/empty.html">Empty</a></li><li data-name="Jabber Yabs"><a href="../doc/jabbers.html">Jabber Yabs</a></li><li data-name="Drum Machine"><a href="../doc/music.html">Drum Machine</a></li><li data-name="Pacman"><a href="../doc/pacman.html">Pacman</a></li><li data-name="Procedurally generated room"><a href="../doc/temple.html">Procedurally generated room</a></li></ul></li><li><h2>Pages</h2><ul><li data-name="Getting started"><a href="../doc/index.html">Getting started</a></li><li data-name="Installation and Setup"><a href="../doc/setup.html">Installation and Setup</a></li><li data-name="Frequently Asked Questions"><a href="../doc/faq.html">Frequently Asked Questions</a></li><li data-name="Using the VR Development Environment"><a href="../doc/editorVRManual.html">Using the VR Development Environment</a></li><li data-name="Head Mounted Displays"><a class="incomplete" href="../doc/hmd.html">Head Mounted Displays</a></li><li data-name="What is WebVR?"><a class="incomplete" href="../doc/webvr.html">What is WebVR?</a></li><li data-name="Synchronizing your Smartphone and PC"><a class="incomplete" href="../doc/sync.html">Synchronizing your Smartphone and PC</a></li></ul></li><li><h2>Tutorials</h2><ul><li data-name="Basic Lighting"><a class="incomplete" href="../doc/lighting.html">Basic Lighting</a></li><li data-name="Build a Basic Drum Machine"><a class="incomplete" href="../doc/drum.html">Build a Basic Drum Machine</a></li><li data-name="Display Images and Video"><a class="incomplete" href="../doc/video.html">Display Images and Video</a></li><li data-name="Building and Saving a Scene in Primrose"><a class="incomplete" href="../doc/export.html">Building and Saving a Scene in Primrose</a></li><li data-name="Building Basic Scenes in Blender"><a class="incomplete" href="../doc/blenderBeginner.html">Building Basic Scenes in Blender</a></li><li data-name="More Advanced Scenes in Blender"><a class="incomplete" href="../doc/blenderAdvanced.html">More Advanced Scenes in Blender</a></li><li data-name="Build a 3D Integrated Development Environment"><a class="incomplete" href="../doc/editorVRTutorial.html">Build a 3D Integrated Development Environment</a></li><li data-name="Setup a Multiplayer Server"><a class="incomplete" href="../doc/server.html">Setup a Multiplayer Server</a></li></ul></li></ul></nav></details></div><div id="documentation"><section><article><!-- start documentation.jade documentation block --><!-- start demo.jade banner block --><h1>Pacman</h1><p>Click on the image below to lock mouse cursor to demo. <a href="../doc/pacman" target="_blank">Open demo in new window</a>.</p><iframe id="demo" src="../doc/pacman" role="application" allowfullscreen></iframe><h2>Source</h2><pre id="editorContainer">grammar(&quot;JavaScript&quot;);
+var GRASS = &quot;../images/grass.png&quot;,
+  ROCK = &quot;../images/rock.png&quot;,
+  SAND = &quot;../images/sand.png&quot;,
+  WATER = &quot;../images/water.png&quot;,
+  DECK = &quot;../images/deck.png&quot;,
+  CODE_KEY = &quot;Pacman code&quot;,
+
+  env = new Primrose.BrowserEnvironment(&quot;Pacman&quot;, {
+    quality: Primrose.Quality.HIGH,
+    autoScaleQuality: false,
+    autoRescaleQuality: false,
+    backgroundColor: 0x000000,
+    skyTexture: DECK,
+    ambientSound: &quot;../audio/menu.ogg&quot;,
+    groundTexture: DECK,
+    fullScreenIcon: &quot;../models/monitor.obj&quot;,
+    VRIcon: &quot;../models/cardboard.obj&quot;,
+    font: &quot;../fonts/helvetiker_regular.typeface.js&quot;
+  }),
+
+  editor = null,
+  output = null,
+  editorFrame = null,
+  editorFrameMesh = null,
+
+  modA = isOSX ? &quot;metaKey&quot; : &quot;ctrlKey&quot;,
+  modB = isOSX ? &quot;altKey&quot; : &quot;shiftKey&quot;,
+  cmdA = isOSX ? &quot;CMD&quot; : &quot;CTRL&quot;,
+  cmdB = isOSX ? &quot;OPT&quot; : &quot;SHIFT&quot;,
+  cmdPre = cmdA + &quot;+&quot; + cmdB,
+
+  scriptUpdateTimeout,
+  lastScript = null,
+  scriptAnimate = null,
+
+  subScene = hub(),
+  editorCenter = hub();
+
+env.addEventListener(&quot;ready&quot;, function () {
+  env.appendChild(editorCenter);
+  env.appendChild(subScene);
+
+  var editorSize = isMobile ? 512 : 1024,
+    fontSize = 20;
+
+  editorFrame = env.createElement(&quot;section&quot;);
+  editorFrame.id = &quot;EditorFrame&quot;;
+  editorFrame.className = &quot;shell&quot;;
+  editorFrame.style.width = editorSize;
+  editorFrame.style.height = editorSize;
+
+  editor = env.createElement(&quot;textarea&quot;);
+  editor.id = &quot;Editor&quot;;
+  editor.style.width = editorFrame.surfaceWidth;
+  editor.style.height = editorFrame.surfaceHeight;
+  editor.style.fontSize = fontSize;
+  editor.tokenizer = Primrose.Text.Grammars.JavaScript;
+  editor.value = getSourceCode(isInIFrame);
+
+  editorFrame.appendChild(editor);
+
+  editorFrameMesh = editorCenter.appendChild(editorFrame);
+  editorFrameMesh.name = &quot;EditorFrameMesh&quot;;
+  editorFrameMesh.position.set(0, 0, 0);
+  editorFrameMesh.visible = false;
+  editorFrameMesh.disabled = true;
+});
+
+window.addEventListener(&quot;beforeunload&quot;, function (evt) {
+  if (false &amp;&amp; editor &amp;&amp; editor.value !== getSourceCode(true)) {
+    return evt.returnValue = &quot;Are you sure you want to leave?&quot;;
+  }
+}, false);
+
+window.addEventListener(&quot;unload&quot;, function (evt) {
+  if (editor) {
+    var script = editor.value;
+    if (script.length &gt; 0) {
+      setSetting(CODE_KEY, script);
+    }
+  }
+}, false);
+
+env.addEventListener(&quot;update&quot;, function (dt) {
+  if (!scriptUpdateTimeout) {
+    scriptUpdateTimeout = setTimeout(updateScript, 500);
+  }
+
+  editorCenter.position.copy(env.player.position);
+
+  if (scriptAnimate) {
+    // If quality has degraded, it's likely because the user bombed on a script.
+    // Let's help them not lose their lunch.
+    if (env.quality === Primrose.Quality.NONE) {
+      scriptAnimate = null;
+      wipeScene();
+    }
+    else {
+      try {
+        scriptAnimate.call(env, dt);
+      }
+      catch (exp) {
+        console.error(exp);
+        scriptAnimate = null;
+      }
+    }
+  }
+});
+function getSourceCode(skipReload) {
+  var defaultDemo = pacman.toString(),
+    src = skipReload &amp;&amp; defaultDemo || getSetting(CODE_KEY, defaultDemo);
+  // If there was no source code stored in local storage,
+  // we use the script from a saved function and assume
+  // it has been formatted with 2 spaces per-line.
+  if (src === defaultDemo) {
+    var lines = src.replace(&quot;\r\n&quot;, &quot;\n&quot;).split(&quot;\n&quot;);
+    lines.pop();
+    lines.shift();
+    for (var i = 0; i &lt; lines.length; ++i) {
+      lines[i] = lines[i].substring(2);
+    }
+    src = lines.join(&quot;\n&quot;);
+  }
+  return src.trim();
+}
+function pacman() {
+  var R = Primrose.Random.number,
+    L = Primrose.ModelLoader.loadObject,
+    colors = [
+      0xff0000,
+      0xffff00,
+      0xff00ff,
+      0x00ffff
+    ],
+    ghosts;
+  L(&quot;../models/ghost.obj&quot;).then(function (ghost) {
+    ghosts = colors.map(function (color, i) {
+      var g = ghost.clone(),
+        body = g.children[0];
+      textured(body, color);
+      scene.appendChild(g);
+      g.position.set(i * 3 - 4, 0, -5);
+      g.velocity = v3(R(-1, 1), 0, R(-1, 1));
+      return g;
+    });
+  });
+
+  return function (dt) {
+    if (ghosts) {
+      ghosts.forEach(function (g) {
+        g.position.add(g.velocity.clone().multiplyScalar(dt));
+      });
+    }
+  }
+}
+
+env.addEventListener(&quot;keydown&quot;, function (evt) {
+  if (evt[modA] &amp;&amp; evt[modB]) {
+    if (evt.keyCode === Primrose.Keys.E) {
+      if (editorFrameMesh.visible &amp;&amp; env.currentControl &amp;&amp; env.currentControl.focused) {
+        env.currentControl.blur();
+        env.currentControl = null;
+      }
+      editorFrameMesh.visible = !editorFrameMesh.visible;
+      editorFrameMesh.disabled = !editorFrameMesh.disabled;
+    }
+    else if (evt.keyCode === Primrose.Keys.E &amp;&amp; editor) {
+      Primrose.HTTP.sendObject(&quot;saveScript&quot;, {
+        &quot;Content-Type&quot;: &quot;application/json&quot;,
+        data: {
+          fileName: &quot;pacman&quot;,
+          content: editor.value
+        }
+      });
+    }
+    else if (evt.keyCode === Primrose.Keys.X) {
+      editor.value = &quot;&quot;;
+    }
+  }
+
+  if (scriptUpdateTimeout) {
+    clearTimeout(scriptUpdateTimeout);
+    scriptUpdateTimeout = null;
+  }
+});
+
+function wipeScene() {
+  for (var i = subScene.children.length - 1; i &gt;= 0; --i) {
+    subScene.remove(subScene.children[i]);
+  }
+}
+
+function updateScript() {
+  var newScript = editor.value,
+    exp;
+  if (newScript !== lastScript) {
+    scriptUpdateTimeout = null;
+    lastScript = newScript;
+    if (newScript.indexOf(&quot;function update&quot;) &gt;= 0 &amp;&amp;
+      newScript.indexOf(&quot;return update&quot;) &lt; 0) {
+      newScript += &quot;\nreturn update;&quot;;
+    }
+    try {
+      console.log(&quot;----- loading new script -----&quot;);
+      var scriptUpdate = new Function(&quot;scene&quot;, newScript);
+      wipeScene();
+      scriptAnimate = scriptUpdate.call(env, subScene);
+      if (scriptAnimate) {
+        scriptAnimate(0);
+      }
+      console.log(&quot;----- script loaded -----&quot;);
+      if (!scriptAnimate) {
+        console.log(&quot;----- No update script provided -----&quot;);
+      }
+      else if (env.quality === Primrose.Quality.NONE) {
+        env.quality = Primrose.Quality.MEDIUM;
+      }
+    }
+    catch (exp) {
+      console.error(exp);
+      scriptAnimate = null;
+      throw exp;
+    }
+  }
+}
+
+function clrscr() {
+  if (output) {
+    var t = output;
+    t.value = &quot;&quot;;
+    t.selectionStart = t.selectionEnd = t.value.length;
+    t.scrollIntoView(t.frontCursor);
+  }
+}</pre><!-- end documentation.jade documentation block --></article></section></div></main><!-- end documentation.jade main block --><!-- end main.jade main block -->
+<!-- start main.jade footer block --><script type="text/javascript" async defer src="app.js"></script><!-- end main.jade footer block --></body></html>

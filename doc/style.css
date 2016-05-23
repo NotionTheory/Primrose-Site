@@ -240,7 +240,7 @@ body > div {
 
 #documentation iframe {
   width: 100%;
-  height: 20vw;
+  height: 20em;
   border: none;
 }
 
@@ -256,6 +256,10 @@ article > blockquote {
 
 a {
   text-decoration: none;
+}
+
+blockquote a {
+  text-decoration: underline;
 }
 
 #contents a {

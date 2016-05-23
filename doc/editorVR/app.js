@@ -1,16 +1,16 @@
-var GRASS = "images/grass.png",
-  ROCK = "images/rock.png",
-  SAND = "images/sand.png",
-  WATER = "images/water.png",
-  DECK = "images/deck.png",
+var GRASS = "../images/grass.png",
+  ROCK = "../images/rock.png",
+  SAND = "../images/sand.png",
+  WATER = "../images/water.png",
+  DECK = "../images/deck.png",
 
-  app = new Primrose.BrowserEnvironment("Editor3D", {
-    skyTexture: "images/bg2.jpg",
-    ambientSound: "audio/wind.ogg",
+  env = new Primrose.BrowserEnvironment("Editor3D", {
+    skyTexture: "../images/bg2.jpg",
+    ambientSound: "../audio/wind.ogg",
     groundTexture: GRASS,
-    fullScreenIcon: "models/monitor.obj",
-    VRIcon: "models/cardboard.obj",
-    font: "fonts/helvetiker_regular.typeface.js"
+    fullScreenIcon: "../models/monitor.obj",
+    VRIcon: "../models/cardboard.obj",
+    font: "../fonts/helvetiker_regular.typeface.js"
   }),
 
   subScene = new THREE.Object3D(),
@@ -35,56 +35,55 @@ var GRASS = "images/grass.png",
   lastScript = null,
   scriptAnimate = null,
 
-  editorCenter = new THREE.Object3D();
+  editorCenter = hub();
 
-app.addEventListener("ready", function () {
-  app.scene.add(editorCenter);
-  app.scene.add(subScene);
+env.addEventListener("ready", function () {
+  env.appendChild(editorCenter);
+  env.scene.add(subScene);
 
-  stereoImage = new Primrose.Controls.Image({
-    id: "StereoImage"
-  });
-  stereoImage.loadStereoImage("images/prong.stereo.jpg")
-    .then(function () {
-      stereoImageMesh = textured(quad(0.5, 0.5 * stereoImage.imageHeight / stereoImage.imageWidth), stereoImage);
-      stereoImageMesh.rotation.set(0, 75 * Math.PI / 180, 0);
-      stereoImageMesh.position.set(-4, app.avatarHeight, -1);
-      app.scene.add(stereoImageMesh);
-      app.registerPickableObject(stereoImageMesh);
-    });
+  stereoImage = env.createElement("img");
+  stereoImage.id = "StereoImage";
+  stereoImage.className = "stereo";
+  stereoImage.addEventListener("load", function (evt) {
+    stereoImageMesh = env.appendChild(stereoImage);
+    stereoImageMesh.rotation.set(0, 75 * Math.PI / 180, 0);
+    stereoImageMesh.position.set(-4, env.avatarHeight, -1);
+  }, false);
+  stereoImage.src = "../images/prong.stereo.jpg";
 
   var editorSize = isMobile ? 512 : 1024,
     fontSize = isMobile ? 10 : 20;
 
-  editorFrame = new Primrose.Surface({
-    id: "EditorFrame",
-    bounds: new Primrose.Text.Rectangle(0, 0, editorSize, editorSize)
-  });
+  editorFrame = env.createElement("section");
+  editorFrame.id = "EditorFrame";
+  editorFrame.className = "shell";
+  editorFrame.style.width = editorSize;
+  editorFrame.style.height = editorSize;
 
-  editor = new Primrose.Text.Controls.TextBox({
-    id: "Editor",
-    bounds: new Primrose.Text.Rectangle(0, 0, editorFrame.surfaceWidth, Math.floor(editorFrame.surfaceHeight * 2 / 3)),
-    tokenizer: Primrose.Text.Grammars.JavaScript,
-    value: getSourceCode(isInIFrame),
-    fontSize: fontSize
-  });
+  editor = env.createElement("textarea");
+  editor.id = "Editor";
+  editor.style.width = editorFrame.surfaceWidth;
+  editor.style.height = Math.floor(editorFrame.surfaceHeight * 2 / 3);
+  editor.style.fontSize = fontSize;
+  editor.tokenizer = Primrose.Text.Grammars.JavaScript;
+  editor.value = getSourceCode(isInIFrame);
 
-  output = new Primrose.Text.Controls.TextBox({
-    id: "Output",
-    bounds: new Primrose.Text.Rectangle(0, editor.surfaceHeight + 25, editorFrame.surfaceWidth, editorFrame.surfaceHeight - editor.surfaceHeight - 25),
-    tokenizer: Primrose.Text.Grammars.PlainText,
-    hideLineNumbers: true,
-    readOnly: true,
-    fontSize: fontSize
-  });
+  output = env.createElement("pre");
+  output.id = "Output";
+  output.style.top = editor.surfaceHeight + 25;
+  output.style.width = editorFrame.surfaceWidth;
+  output.style.height = editorFrame.surfaceHeight - editor.surfaceHeight - 25;
+  output.style.fontSize = fontSize;
 
-  button1 = new Primrose.Controls.Button2D({
-    id: "ThemeButton",
-    bounds: new Primrose.Text.Rectangle(editorFrame.surfaceWidth - 400, output.bounds.top, 400, 45),
-    value: "Switch to dark theme",
-    backgroundColor: "#ffff00",
-    color: "#0000ff"
-  });
+  button1 = env.createElement("button");
+  button1.id = "ThemeButton";
+  button1.style.backgroundColor = "#ffff00";
+  button1.style.color = "#0000ff";
+  button1.style.left = editorFrame.surfaceWidth - 400;
+  button1.style.top = output.bounds.top;
+  button1.style.width = 400;
+  button1.style.height = 45;
+  button1.value = "Switch to dark theme";
 
   button1.addEventListener("click", function () {
     var nextTheme = Primrose.Text.Themes.Default,
@@ -101,29 +100,20 @@ app.addEventListener("ready", function () {
   editorFrame.appendChild(output);
   editorFrame.appendChild(editor);
   editorFrame.appendChild(button1);
-  editorFrameMesh = textured(shell(3, 10, 10), editorFrame, {
-    opacity: 0.75
-  });
+
+  editorFrameMesh = editorCenter.appendChild(editorFrame);
   editorFrameMesh.name = "MyWindow";
   editorFrameMesh.position.set(0, 0, 0);
-  editorCenter.add(editorFrameMesh);
-  app.registerPickableObject(editorFrameMesh);
 
-  documentation = new Primrose.Text.Controls.TextBox({
-    id: "Documentation",
-    bounds: new Primrose.Text.Rectangle(0, 0, editorSize, editorSize),
-    tokenizer: Primrose.Text.Grammars.PlainText,
-    hideLineNumbers: true,
-    readOnly: true,
-    value: getDocumentation(),
-    fontSize: fontSize
-  });
+  documentation = env.createElement("div");
+  documentation.id = "Documentation";
+  documentation.style.width = editorSize;
+  documentation.style.height = editorSize;
+  documentation.element = "docPage";
 
-  documentationMesh = textured(quad(2, 2), documentation);
-  documentationMesh.position.set(-2.2, app.avatarHeight, -1);
+  documentationMesh = env.appendChild(documentation);
+  documentationMesh.position.set(-2.2, env.avatarHeight, -1);
   documentationMesh.rotation.set(0, Math.PI / 4, 0);
-  app.scene.add(documentationMesh);
-  app.registerPickableObject(documentationMesh);
 
   console.log("INSTRUCTIONS:");
   console.log(" - " + cmdPre + "+E to show/hide editor");
@@ -132,34 +122,34 @@ app.addEventListener("ready", function () {
   console.log();
 });
 
-app.addEventListener("update", function (dt) {
+env.addEventListener("update", function (dt) {
   if (!scriptUpdateTimeout) {
     scriptUpdateTimeout = setTimeout(updateScript, 500);
   }
 
-  editorCenter.position.copy(app.player.position);
+  editorCenter.position.copy(env.player.position);
 
   if (scriptAnimate) {
     // If quality has degraded, it's likely because the user bombed on a script.
     // Let's help them not lose their lunch.
-    if (app.quality === Primrose.Quality.NONE) {
+    if (env.quality === Primrose.Quality.NONE) {
       scriptAnimate = null;
       wipeScene();
     }
-    else{
-      scriptAnimate.call(app, dt);
+    else {
+      scriptAnimate.call(env, dt);
     }
   }
 });
 
-app.addEventListener("keydown", function (evt) {
+env.addEventListener("keydown", function (evt) {
   if (evt[modA] && evt[modB]) {
     if (evt.keyCode === Primrose.Keys.E) {
       documentationMesh.visible = editorFrameMesh.visible = !editorFrameMesh.visible;
       documentationMesh.disabled = editorFrameMesh.disabled = !editorFrameMesh.disabled;
-      if (!editorFrameMesh.visible && app.currentEditor && app.currentEditor.focused) {
-        app.currentEditor.blur();
-        app.currentEditor = null;
+      if (!editorFrameMesh.visible && env.currentEditor && env.currentEditor.focused) {
+        env.currentEditor.blur();
+        env.currentEditor = null;
       }
     }
     else if (evt.keyCode === Primrose.Keys.X) {
@@ -172,6 +162,10 @@ app.addEventListener("keydown", function (evt) {
     scriptUpdateTimeout = null;
   }
 });
+
+window.addEventListener("beforeunload", function (evt) {
+  return evt.returnValue = "Are you sure you want to leave?";
+}, false);
 
 window.addEventListener("unload", function () {
   if (editor) {
@@ -202,7 +196,7 @@ function updateScript() {
       console.log("----- loading new script -----");
       var scriptUpdate = new Function("scene", newScript);
       wipeScene();
-      scriptAnimate = scriptUpdate.call(app, subScene);
+      scriptAnimate = scriptUpdate.call(env, subScene);
       if (scriptAnimate) {
         scriptAnimate(0);
       }
@@ -210,8 +204,8 @@ function updateScript() {
       if (!scriptAnimate) {
         console.log("----- No update script provided -----");
       }
-      else if (app.quality === Primrose.Quality.NONE) {
-        app.quality = Primrose.Quality.MEDIUM;
+      else if (env.quality === Primrose.Quality.NONE) {
+        env.quality = Primrose.Quality.MEDIUM;
       }
     }
     catch (exp) {
@@ -306,54 +300,4 @@ function testDemo(scene) {
       }
     }
   }
-}
-
-// This is a function to just push it out of the way, uncluttering
-// the code above.
-function getDocumentation() {
-  return "functions:\n" + "  console.log( msg );\n" + "    print a message to the window below the editor.\n" +
-    "\n" +
-    "  put( objectA ).on( objectB )[.at( x, y, z )];\n" +
-    "    objectA: a THREE.Object3D to be added to another,\n" +
-    "    objectB: a THREE.Object3D where objectA will be added,\n" +
-    "    x, y, z: a location to set for objectA relative to objectB\n" +
-    "\n" +
-    "  light( color [, intensity[, distance[, decay]]] );\n" +
-    "    creates a THREE.PointLight with the same parameters.\n" +
-    "\n" +
-    "  brick( txtName );\n" +
-    "    creates a textured cube with the named texture, one of:\n" +
-    "      [SAND, WATER, ROCK, GRASS, DECK].\n" +
-    "\n" +
-    "  quad( width[, height] );\n" +
-    "    creates a THREE.PlaneBufferGeometry with the same parameters.\n" +
-    "    if height is undefined, height is set to width (square).\n" +
-    "\n" +
-    "  box( width[, height, length] );\n" +
-    "    creates a THREE.BoxGeometry with the same parameters.\n" +
-    "    if height is undefined, height and length are set to width (cube).\n" +
-    "\n" +
-    "  hub( );\n" +
-    "    creates a raw THREE.Object3D. Useful for combining objects.\n" +
-    "\n" +
-    "  sphere( radius[, slices, rings] );\n" +
-    "    creates a THREE.SphereGeometry with the same parameters.\n" +
-    "\n" +
-    "  shell( radius[, slices, rings[, phi, theta]] );\n" +
-    "    creates a portion of the inside surface of a sphere.\n" +
-    "\n" +
-    "  from( start ).to( end ).exec( thunk );\n" +
-    "    iterates on the range [start, end), passing the index as the parameter\n" +
-    "    to thunk, accumulating an array of thunk's return value.\n" +
-    "\n" +
-    "  textured( geometry, txt[, options: { unshaded: false, wireframe: false, opacity: 1, txtRepeatS: 1, txtRepeatT: 1} ] );\n" +
-    "    geometry: a THREE.Geometry object\n" +
-    "    txt: a material definition of some kind. It could be a:\n" +
-    "      number - a solid hex color\n" +
-    "      string - a path to a texture image\n" +
-    "      Primrose.Text.Controls.TextBox - a text editor\n" +
-    "    unshaded: set to true to use constant lighting (default false)\n" +
-    "    opacity: 1 - opaque, 0 - transparent (default 1).\n" +
-    "    txtRepeatS: texture repeat in S direction (default 1).\n" +
-    "    txtRepeat: texture repeat in T direction (default 1)";
 }
