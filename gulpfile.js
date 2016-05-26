@@ -31,7 +31,7 @@ gulp.task("copy:primrose", ["build:primrose"], function () {
       f += "**/*";
     }
     return f;
-  }).concat(["!../Primrose/src/**/*"]), { base: "../Primrose" })
+  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]), { base: "../Primrose" })
     .pipe(gulp.dest("."));
 });
 
