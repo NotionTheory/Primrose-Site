@@ -1,1 +1,6 @@
-(require("./requireDirectory"))("socketControllers", module);
+"use strict";
+
+module.exports = require("./requireDirectory")("socketControllers").reduce((obj, ctrl) => {
+  obj[ctrl.handshake] = obj.bindSocket;
+  return obj;
+}, {});
