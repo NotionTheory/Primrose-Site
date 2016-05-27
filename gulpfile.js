@@ -85,9 +85,7 @@ gulp.task("pug:site", ["zip:quickstart", "build:primrose-debug"], function () {
         fileSize: fileSize
       });
     }))
-    .pipe(pug({
-      pretty: true
-    }))
+    .pipe(pug())
     .on("error", console.error.bind(console, "PUG ERROR"))
     .pipe(gulp.dest("."));
 });
