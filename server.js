@@ -1,20 +1,16 @@
-var http = require("http"),
-  socketio = require("socket.io"),
-  webServer = require("./server/webServer").webServer,
-  webSocketServer = require("./server/webSocketServer"),
+// start the HTTP server
+const http = require("http"),
+  webServer = require("./server/webServer"),
   appServer = http.createServer(webServer),
-  io = socketio.listen(appServer),
-  port = process.env.PORT || 8383,
-  os = require("os").platform();
-
-if (os !== "win32") {
-  socketio.engine.ws = new require('uws').Server({
-    noServer: true,
-    clientTracking: false,
-    perMessageDeflate: false
-  });
-}
-
+  port = process.env.PORT || 80;
 console.log("Listening on port " + port);
 appServer.listen(port);
+
+// start the WebSocket server
+const webSocketServer = require("./server/webSocketServer"),
+  socketio = require("socket.io"),
+  io = socketio.listen(appServer);
 io.sockets.on("connection", webSocketServer);
+
+// start the browser
+require("./server/starter")(false, port);
