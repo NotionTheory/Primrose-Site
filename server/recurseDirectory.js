@@ -1,4 +1,5 @@
-﻿var fs = require("fs"),
+﻿"use strict";
+const fs = require("fs"),
   path = require("path");
 
 module.exports = function recurseDirectory(root) {

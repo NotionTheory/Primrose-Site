@@ -1,5 +1,6 @@
-var log = require("../core").log,
-  users = require("../data/users");
+"use strict";
+const log = require("../core").log,
+  users = require("../data/Users");
 
 module.exports = {
   handshake: "login",

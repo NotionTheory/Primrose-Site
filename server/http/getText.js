@@ -1,4 +1,3 @@
-﻿var get = require("./get");
-module.exports = function (url, options) {
-  return get("text/plain", url, options);
-};
+﻿"use strict";
+const get = require("./get");
+module.exports = (url, options) => get("text/plain", url, options);

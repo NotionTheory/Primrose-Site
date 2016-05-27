@@ -1,4 +1,3 @@
-﻿var post = require("./post");
-module.exports = function (url, options) {
-  return post("text/json", url, options);
-};
+﻿"use strict";
+const post = require("./post");
+module.exports = (url, options) => post("text/json", url, options);

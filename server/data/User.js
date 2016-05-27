@@ -1,4 +1,4 @@
-var log = require("../core").log;
+"use strict";
 
 function User(info) {
   this.devices = [];
@@ -16,6 +16,7 @@ function User(info) {
     userName: info.userName,
     app: null
   };
+const log = require("../core").log;
 
   this.salt = info.salt;
   this.hash = info.hash;

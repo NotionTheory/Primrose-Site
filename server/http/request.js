@@ -1,7 +1,8 @@
-﻿var http = require("http"),
+﻿"use strict";
+const http = require("http"),
   URL = require("url");
 
-module.exports = function (method, type, url, options) {
+module.exports = (method, type, url, options) => {
   return new Promise(function (resolve, reject) {
     options = options || {};
     options.headers = options.headers || {};

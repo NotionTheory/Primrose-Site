@@ -1,5 +1,8 @@
-﻿var azure = require("azure-storage"),
-  tables = azure.createTableService(process.env.NODE_ENV === "dev" && require("./secrets").connectionString || null),
+﻿"use strict";
+
+const azure = require("azure-storage"),
+  connectionString = process.env.NODE_ENV === "dev" && require("./secrets").connectionString || null,
+  tables = azure.createTableService(connectionString),
   ent = azure.TableUtilities.entityGenerator,
   meta = {};
 

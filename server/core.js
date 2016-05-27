@@ -1,3 +1,4 @@
+"use strict";
 (function (exports) {
   // A few functions used in conjunction with
   // hashMap and where

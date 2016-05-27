@@ -1,12 +1,10 @@
 "use strict";
 
-var http = require("http"),
+const http = require("http"),
   url = require("url"),
   core = require("./core"),
   routes = require("./controllers").filter((r) => !!r.URLPattern),
   Message = require("./Message");
-
-console.log(routes.length, "routes");
 
 // final, default GET handler.
 routes.push({
@@ -66,9 +64,7 @@ function serveRequest(request, response) {
       };
     })
     .then((state) => findController(request)(state))
-    .catch((err) => {
-      return (err instanceof Message) ? err : Message.InternalServerError;
-    })
+    .catch((err) => (err instanceof Message) ? err : Message.InternalServerError)
     .then((msg) => msg.send(response));
 }
 

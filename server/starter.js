@@ -1,4 +1,5 @@
-var os = require("os"),
+"use strict";
+const os = require("os"),
     spawn = require("child_process").spawn,
     defaultStartProc = {
       linux: "xdg-open",

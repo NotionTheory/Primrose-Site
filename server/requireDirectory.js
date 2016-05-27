@@ -1,4 +1,5 @@
-var fs = require("fs");
+"use strict";
+const fs = require("fs");
 
 module.exports = function requireDirectory(path) {
   var root = "./server/",

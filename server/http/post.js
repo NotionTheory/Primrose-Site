@@ -1,4 +1,3 @@
-﻿var request = require("./request");
-module.exports = function (type, url, options) {
-  return request("POST", type, url, options);
-};
+﻿"use strict";
+const request = require("./request");
+module.exports = (type, url, options) => request("POST", type, url, options);

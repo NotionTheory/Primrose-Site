@@ -1,4 +1,6 @@
-var Message = require("../Message.js");
+"use strict";
+
+const Message = require("../Message.js");
 
 module.exports = {
   URLPattern: /^\/logger\/?$/,

@@ -1,4 +1,6 @@
-var getObject = require("../http/getObject");
+"use strict";
+
+const getObject = require("../http/getObject");
 
 //http://api.repo.nypl.org/
 
