@@ -1,1 +1,1 @@
-(require("./requireDirectory"))("controllers", module);
+module.exports = require("./requireDirectory")("controllers");
