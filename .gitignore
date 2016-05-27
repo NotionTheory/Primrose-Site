@@ -1,3 +1,4 @@
 node_modules/
 obj/Debug/Primrose-Site.njsproj.FileListAbsolute.txt
 *.blend1
+server/data/secrets.json
