@@ -1,14 +1,19 @@
+var Message = require("../Message.js");
+
 module.exports = {
-  pattern: /^\/logger\/?$/,
-  POST: function (params, sendData, serverError, body) {
-    var func = console[body.name];
-    if (func) {
-      body.args.unshift(body.name.toLocaleUpperCase() + ":> ");
-      func.apply(console, body.args);
+  URLPattern: /^\/logger\/?$/,
+  POST: {
+    "*/*": (state) => {
+      var body = state.body, 
+        func = console[body.name];
+      if (func) {
+        body.args.unshift(body.name.toLocaleUpperCase() + ":> ");
+        func.apply(console, body.args);
+      }
+      else {
+        console.log(body);
+      }
+      return Message.noContent();
     }
-    else {
-      console.log(body);
-    }
-    sendData("text/plain");
   }
 };

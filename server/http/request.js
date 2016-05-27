@@ -7,8 +7,6 @@ module.exports = function (method, type, url, options) {
     options.headers = options.headers || {};
     options.headers.Accept = options.headers.Accept || type;
 
-    console.log(options);
-
     if (options.data) {
       // We could do other data types, but in my case, I'm probably only ever
       // going to want JSON. No sense in overcomplicating the interface for

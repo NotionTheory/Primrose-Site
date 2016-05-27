@@ -1,133 +1,141 @@
-var fs = require("fs"),
-  http = require("http"),
-  mime = require("mime"),
-  stream = require("stream"),
+"use strict";
+
+var http = require("http"),
   url = require("url"),
-  core = require("./core.js"),
-  routes = require("./controllers.js");
+  core = require("./core"),
+  routes = require("./controllers").filter((r) => !!r.URLPattern),
+  Message = require("./Message");
 
-function serverError(response, requestedURL, httpStatusCode) {
-  var rest = Array.prototype.slice.call(arguments, 3),
-    msg = core.fmt("URL: [$1] $2: $3", requestedURL, httpStatusCode, http.STATUS_CODES[httpStatusCode]);
-  if (rest.length > 0) {
-    msg += core.fmt(" -> [$1]", rest.join("], ["));
-  }
+console.log(routes.length, "routes");
 
-  if (httpStatusCode >= 500) {
-    console.error("Error", msg);
-  }
-  else {
-    // so many of these are just bots trying to exploit open proxies
-    // that it will fill up the logs with junk and before long we won't
-    // have any disk space left.
-    // console.warn("Warning", msg);
-  }
+// final, default GET handler.
+routes.push({
+  URLPattern: /.*/,
+  GET: {
+    "*/*": function (state) {
+      var parts = url.parse(state.url),
+        file = "." + parts.pathname;
 
-  response.writeHead(httpStatusCode);
-  response.end(msg);
-}
+      if (file[file.length - 1] === "/") {
+        file += "index.html";
+      }
+
+      return Message.file(file);
+    }
+  }
+});
 
 function findController(request) {
+  var accept = request.headers.accept,
+    method = request.method,
+    url = request.url;
+
   for (var i = 0; i < routes.length; ++i) {
-    var matches = request.url.match(routes[i].pattern);
-    if (matches) {
-      matches.shift();
-      var handler = routes[i][request.method];
-      if (!handler) {
-        serverError(res, request.url, 405);
+    var route = routes[i],
+      pattern = route.URLPattern,
+      match = url.match(pattern);
+    if (match) {
+      var handlers = route[method];
+      if (handlers) {
+        for (var type in handlers) {
+          var handler = handlers[type];
+          if (type === "*/*" || accept.indexOf(type) >= 0) {
+            for (var k = 1; k < match.length; ++k) {
+              handler = handler.bind(null, match[k]);
+            }
+            return handler;
+          }
+        }
+        return () => Message.NotAcceptable;
       }
       else {
-        return {
-          handler: handler.bind(routes[i]),
-          parameters: matches
-        };
+        return () => Message.MethodNotAllowed;
       }
     }
   }
-}
-
-function matchController(request, response) {
-  var controller = findController(request);
-  if (controller) {
-    function execute(body) {
-      controller.handler(
-        controller.parameters,
-        sendData.bind(this, request, response),
-        serverError.bind(this, response, request.url),
-        body);
-    }
-    if (request.method === "PUT" || request.method === "POST") {
-      var body = [];
-      request.on("data", function (chunk) {
-        body.push(chunk);
-      }).on("end", function () {
-        var text = Buffer.concat(body).toString();
-        if (request.headers["content-type"].indexOf("json") > -1) {
-          text = JSON.parse(text);
-        }
-        execute(text);
-      });
-    }
-    else {
-      execute();
-    }
-    return true;
-  }
-  return false;
-}
-
-function sendData(request, response, mimeType, content, contentLength) {
-  if (!mimeType) {
-    response.writeHead(415);
-    response.end();
-  }
-  else {
-    var headers = {
-      "content-type": mimeType,
-      "connection": "keep-alive"
-    };
-
-    if (!content) {
-      headers["content-length"] = 0;
-      response.writeHead(200, headers);
-      response.end();
-    }
-    else if (content instanceof stream.Readable) {
-      headers["content-length"] = contentLength;
-      response.writeHead(200, headers);
-      content.pipe(response);
-    }
-    else {
-      headers["content-length"] = content.length;
-      response.writeHead(200, headers);
-      response.end(content);
-    }
-  }
+  return () => Message.NotFound;
 }
 
 function serveRequest(request, response) {
-  if (!matchController(request, response) && request.method === "GET") {
-    var parts = url.parse(request.url),
-      file = "." + parts.pathname;
+  return parseBody(request)
+    .then((body) => {
+      return {
+        url: request.url,
+        body: body,
+        cookies: parseCookies(request)
+      };
+    })
+    .then((state) => findController(request)(state))
+    .catch((err) => {
+      return (err instanceof Message) ? err : Message.InternalServerError;
+    })
+    .then((msg) => msg.send(response));
+}
 
-    if (file[file.length - 1] === "/") {
-      file += "index.html";
-    }
+function parseBody(request) {
+  return new Promise((resolve, reject) => {
+    var body = [],
+      size = 0,
+      len = 0;
+    request
+      .on("data", (chunk) => {
+        body.push(chunk);
+        if (size === 0) {
+          len = request.headers["content-length"];
+          if (len === undefined || len === null) {
+            reject(Message.LengthRequired);
+          }
+          else {
+            len = parseFloat(len);
+          }
 
-    fs.lstat(file, function (err, stat) {
-      if (err) {
-        serverError(response, request.url, 404);
-      }
-      else if (stat.isDirectory()) {
-        response.writeHead(307, { "Location": request.url + "/" });
-        response.end();
-      }
-      else {
-        sendData(request, response, mime.lookup(file), fs.createReadStream(file), stat.size);
-      }
-    });
+          size += chunk.length;
+        }
+
+        if (size > 5e6) {
+          reject(Message.PayloadTooLarge);
+        }
+      })
+      .on("end", () => {
+        var text = Buffer.concat(body).toString();
+        if (text.length === 0) {
+          resolve();
+        }
+        else{
+          var type = request.headers["content-type"];
+          if (!type) {
+            reject(Message.BadRequest);
+          }
+          else if (len !== text.length) {
+            reject(Message.BadRequest);
+          }
+          else {
+            try {
+              if (type.indexOf("application/json") > -1) {
+                text = JSON.parse(text);
+              }
+              resolve(text);
+            }
+            catch (exp) {
+              reject(Message.BadRequest);
+            }
+          }
+        }
+      }).on("error", reject);
+  });
+}
+
+function parseCookies(request, body) {
+  if (request.headers.cookie) {
+    return request.headers.cookie.split(";")
+      .map((s) => s.trim())
+      .map((s) => s.split("="))
+      .map((arr) => {
+        var obj = {};
+        obj[arr[0]] = arr.length === 1 || arr[1];
+        return obj;
+      });
   }
 }
 
-module.exports.webServer = serveRequest;
-module.exports.findController = findController;
+module.exports = serveRequest;
