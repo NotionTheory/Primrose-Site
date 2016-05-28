@@ -1,58 +1,11 @@
-﻿var fs = require("fs"),
-  crypto = require("crypto"),
-  User = require("./User"),
-  log = require("../core").log,
+﻿"use strict";
 
-  users = {};
+const crypto = require("crypto"),
+  db = require("./db.js");
 
-fs.readFile("users.json", "utf8", function (err, file) {
-  if (err) {
-    log("No users file");
-  }
-  else {
-    log("Reading users from disk.");
-    var userList = null;
-    try {
-      userList = JSON.parse(file);
-      log("Users found");
-    }
-    catch (exp) {
-      console.error(exp);
-      log("User file corrupted.");
-    }
-  }
-});
-
-function saveUserList() {
-  var userList = [];
-  for (var key in users) {
-    var user = users[key];
-    userList.push({
-      userName: user.state.userName,
-      salt: user.salt,
-      hash: user.hash,
-      email: user.email
-    });
-  }
-  
-  // synchronous so two new users at the same time can't get into
-  // a race condition, right?
-  fs.writeFileSync("users.json", JSON.stringify(userList));
-}
-
-function getUser(key) {
-  return users[key];
-}
-
-function newUser(identity, key, salt, hash) {
-  if (!users[key]) {
-    log("[$1, $2] > new user", key, identity.userName);
-    identity.salt = salt;
-    identity.hash = hash;
-    users[key] = new User(identity);
-  }
-  return users[key];
-}
+db.define("users", [
+  ["name", "PartitionKey", "String"]
+]);
 
 function makeNewSalt() {
   var bytes = crypto.randomBytes(256);
@@ -63,16 +16,82 @@ function makeNewSalt() {
   return salt;
 }
 
-function forEachUser(thunk) {
-  for (var key in users) {
-    thunk(key, getUser(key));
+function getUser(userName) {
+  return db.get("users", userName, "");
+}
+
+function searchUsers() {
+  return db.search("users");
+}
+
+function getSalt(userName){
+  return getUser(userName).catch((err) => {
+    if (process.env.NODE_ENV === "dev" && err.statusCode === 404) {
+      var salt = makeNewSalt(),
+        user = {
+          name: userName,
+          RowKey: "",
+          salt: salt
+        };
+      return setUser(user).then(() => user);
+    }
+    else {
+      console.error("Error getting user salt value", err);
+      throw err;
+    }
+  }).then((user) => user.salt);
+}
+
+function getLoggedInUser(cookies) {
+  var token = getCookie(cookies, "token");
+  if (token !== null && token !== undefined) {
+    return searchUsers().then((users) => users.filter((u) => u.token === token)[0]);
   }
 }
 
+function logout(cookies){
+  return getLoggedInUser(cookies).then((user) => {
+    if (user) {
+      user.token = "logged-out";
+      return setUser(user);
+    }
+  });
+}
+
+function setUser(user) {
+  return db.set("users", user);
+}
+
+function getCookie(cookies, name) {
+  var vals = cookies.map((c) => c[name]).filter((s) => s);
+  return vals[0];
+}
+
+function deleteUser (obj) {
+  return db.delete("users", obj.name, "");
+}
+
+function authenticate(userName, hash){
+  return getUser(userName).then((user) => {
+    if (hash) {
+      if (user.hash !== hash && process.env.NODE_ENV === "dev") {
+        user.hash = hash;
+      }
+
+      if (user.hash === hash) {
+        user.token = makeNewSalt();
+        return setUser(user).then(() => user);
+      }
+    }
+  });
+}
+
 module.exports = {
+  getLoggedInUser: getLoggedInUser,
+  logout: logout,
   get: getUser,
-  forEach: forEachUser,
-  newUser: newUser,
-  newSalt: makeNewSalt,
-  save: saveUserList
+  search: searchUsers,
+  getSalt: getSalt,
+  delete: deleteUser,
+  authenticate: authenticate
 };
