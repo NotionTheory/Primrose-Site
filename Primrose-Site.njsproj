@@ -18,7 +18,7 @@
     <OutputPath>.</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
-    <ProjectView>ProjectFiles</ProjectView>
+    <ProjectView>ShowAllFiles</ProjectView>
     <NodejsPort>80</NodejsPort>
     <StartWebBrowser>True</StartWebBrowser>
     <Environment>NYPL_TOKEN=kd7zdl8042m7gl7o</Environment>
@@ -32,7 +32,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="images\md-2016-03.jpg" />
-    <Content Include="editor2d.html.jade" />
     <Content Include="images\stm.png" />
     <Content Include="templates\main.jade" />
     <Content Include="index.html.jade" />
