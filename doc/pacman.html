@@ -9,7 +9,7 @@ var GRASS = &quot;../images/grass.png&quot;,
   CODE_KEY = &quot;Pacman code&quot;,
 
   env = new Primrose.BrowserEnvironment(&quot;Pacman&quot;, {
-    quality: Primrose.Quality.HIGH,
+    quality: Primrose.Quality.VERYLOW,
     autoScaleQuality: false,
     autoRescaleQuality: false,
     backgroundColor: 0x000000,
@@ -44,7 +44,7 @@ env.addEventListener(&quot;ready&quot;, function () {
   env.appendChild(subScene);
 
   var editorSize = isMobile ? 512 : 1024,
-    fontSize = 20;
+    fontSize = 40 / env.quality;
 
   editorFrame = env.createElement(&quot;section&quot;);
   editorFrame.id = &quot;EditorFrame&quot;;
@@ -67,7 +67,7 @@ env.addEventListener(&quot;ready&quot;, function () {
   editorFrameMesh.position.set(0, 0, 0);
   editorFrameMesh.visible = false;
   editorFrameMesh.disabled = true;
-});
+}, false);
 
 window.addEventListener(&quot;beforeunload&quot;, function (evt) {
   if (false &amp;&amp; editor &amp;&amp; editor.value !== getSourceCode(true)) {

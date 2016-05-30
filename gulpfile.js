@@ -2,6 +2,7 @@
   concat = require("gulp-concat"),
   cssmin = require("gulp-cssmin"),
   data = require("gulp-data"),
+  exec = require("child_process").exec,
   fs = require("fs"),
   primroseInfo = require("../Primrose/package.json"),
   pug = require("gulp-pug"),
@@ -11,22 +12,32 @@
   zip = require("gulp-zip"),
   pathX = /.*\/(.*).js/;
 
-gulp.task("copy:primrose", function () {
+function X(name, cmd, deps){
+  gulp.task(name, deps || [], function(cb){
+    exec(cmd, function (err, stdout, stderr) {
+      console.log(stdout);
+      console.log(stderr);
+      cb(err);
+    });
+  });
+}
+
+X("build:primrose", "cd ../Primrose && gulp release");
+
+gulp.task("copy:primrose", ["build:primrose"], function () {
   return gulp.src(primroseInfo.files.map(function (f) {
     f = "../Primrose/" + f;
     if (f[f.length - 1] === "/") {
       f += "**/*";
     }
     return f;
-  }).concat([
-  "!../Primrose/httpd.ini", 
-  "!../Primrose/StartHere*",
-  "!../Primrose/lib/**/*", 
-  "!../Primrose/src/**/*"]), { base: "../Primrose" })
+  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]), { base: "../Primrose" })
     .pipe(gulp.dest("."));
 });
 
-gulp.task("cssmin", function () {
+X("build:primrose-debug", "cd ../Primrose && gulp debug", ["copy:primrose"]);
+
+gulp.task("cssmin", ["copy:primrose"], function () {
   return gulp.src(["stylesheets/*.css", "!stylesheets/*.min.css"])
     .pipe(rename({ suffix: ".min" }))
     .pipe(cssmin())
@@ -50,7 +61,7 @@ function fileSize(file) {
   return size.toFixed(1) + sizeLabels[labelIndex];
 }
 
-gulp.task("pug:site", ["zip:quickstart"], function () {
+gulp.task("pug:site", ["zip:quickstart", "build:primrose-debug"], function () {
   return gulp.src(["*.jade"], { base: "." })
     .pipe(rename(function (path) {
       path.extname = "";
