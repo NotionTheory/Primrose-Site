@@ -75,8 +75,10 @@
     <Content Include="images\stm-2015-05.jpg" />
     <Compile Include="server\controllers.js" />
     <Compile Include="server\controllers\logger.js" />
+    <Compile Include="server\controllers\login.js" />
     <Compile Include="server\controllers\nypl.js" />
     <Compile Include="server\core.js" />
+    <Compile Include="server\data\db.js" />
     <Compile Include="server\data\users.js" />
     <Compile Include="server\http\get.js" />
     <Compile Include="server\http\getBuffer.js" />
@@ -85,6 +87,7 @@
     <Compile Include="server\http\post.js" />
     <Compile Include="server\http\request.js" />
     <Compile Include="server\http\sendObject.js" />
+    <Compile Include="server\Message.js" />
     <Compile Include="server\options.js" />
     <Compile Include="server\recurseDirectory.js" />
     <Compile Include="server\requireDirectory.js" />
