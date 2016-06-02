@@ -3,8 +3,6 @@
 const socketControllers = require("./socketControllers"),
   log = require("./core").log;
 
-console.log(socketControllers);
-
 module.exports = function (socket) {
   log("New connection!");
   socket.on("handshake", function (controllerName) {
