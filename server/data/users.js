@@ -42,29 +42,8 @@ function getSalt(userName){
   }).then((user) => user.salt);
 }
 
-function getLoggedInUser(cookies) {
-  var token = getCookie(cookies, "token");
-  if (token !== null && token !== undefined) {
-    return searchUsers().then((users) => users.filter((u) => u.token === token)[0]);
-  }
-}
-
-function logout(cookies){
-  return getLoggedInUser(cookies).then((user) => {
-    if (user) {
-      user.token = "logged-out";
-      return setUser(user);
-    }
-  });
-}
-
 function setUser(user) {
   return db.set("users", user);
-}
-
-function getCookie(cookies, name) {
-  var vals = cookies.map((c) => c[name]).filter((s) => s);
-  return vals[0];
 }
 
 function deleteUser (obj) {
@@ -87,8 +66,6 @@ function authenticate(userName, hash){
 }
 
 module.exports = {
-  getLoggedInUser: getLoggedInUser,
-  logout: logout,
   get: getUser,
   search: searchUsers,
   getSalt: getSalt,
