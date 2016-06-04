@@ -4,7 +4,7 @@ const crypto = require("crypto"),
   db = require("./db.js");
 
 db.define("users", [
-  ["name", "PartitionKey", "String"]
+  ["userName", "PartitionKey", "String"]
 ]);
 
 function makeNewSalt() {
