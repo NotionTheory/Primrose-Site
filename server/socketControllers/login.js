@@ -17,7 +17,7 @@ module.exports = {
   bindSocket: (socket) => {
     var key = null,
       identity = null;
-    function receiveHash(hash) {
+    function receiveHash(name, hash) {
       userDB.authenticate(identity.userName, hash, identity.email)
         .then((user) => {
           if (!user) {
@@ -30,7 +30,7 @@ module.exports = {
           }
           user.addDevice(socket, activeUsers);
           activeUsers[key] = user;
-        }).catch((exp) => socket.emit("loginFailed", exp.message || exp));
+        }).catch((exp) => socket.emit(name + "Failed", err(exp.message || exp)));
     }
 
     function userAuth(name, failOnMatch, getSalt) {
@@ -47,7 +47,7 @@ module.exports = {
               socket.emit(name + "Failed");
             }
             else {
-              socket.once("hash", receiveHash);
+              socket.once("hash", receiveHash.bind(null, name));
               socket.emit("salt", getSalt(matches));
             }
           });
