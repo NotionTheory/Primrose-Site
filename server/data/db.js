@@ -76,7 +76,11 @@ module.exports = {
       map.toObject[entProperty] = objProperty;
       map.types[objProperty] = type;
     }
+
+    return map.ready;
   },
+
+  ready: (table) => meta[table] && meta[table].ready,
 
   set: (table, obj) => promisify(table, (callback) => tables.insertOrMergeEntity(table, wrap(table, obj), callback)),
 
