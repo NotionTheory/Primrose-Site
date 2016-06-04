@@ -50,7 +50,7 @@ function deleteUser (obj) {
   return db.delete("users", obj.name, "");
 }
 
-function authenticate(userName, hash){
+function authenticate(userName, hash, email) {
   return searchUsers(userName).then((users) => {
     var user = users.length > 0 ? users[0] : {
       userName: userName,
@@ -66,6 +66,10 @@ function authenticate(userName, hash){
 
       if (user.hash === hash) {
         user.token = makeNewSalt();
+
+        if (email) {
+          user.email = email;
+        }
         return setUser(user).then(() => user);
       }
     }
