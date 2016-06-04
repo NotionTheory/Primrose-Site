@@ -1,5 +1,6 @@
 "use strict";
-const fs = require("fs");
+const fs = require("fs"),
+  fileTest = /^[^.].+\.js(on)?$/;
 
 module.exports = function requireDirectory(path) {
   var root = "./server/",
@@ -9,12 +10,13 @@ module.exports = function requireDirectory(path) {
     const dir = directories.shift(),
     files = fs.readdirSync(root + dir);
     files.forEach((file) => {
+      console.log(file, fileTest.test(file));
       const subpath = dir + "/" + file,
       stat = fs.lstatSync(root + subpath);
       if (stat.isDirectory()) {
         directories.push(root + subpath);
       }
-      else if (/\.js(on)?$/.test(file)) {
+      else if (fileTest.test(file)) {
         output.push(require("./" + subpath));
       }
     });
