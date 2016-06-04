@@ -18,4 +18,6 @@ io = socketio.listen(appServer);
 io.sockets.on("connection", webSocketServer);
 
 // start the browser
-require("./server/starter")(false, port, options.url);
+if (options.url) {
+  require("./server/starter")(false, port, options.url);
+}
