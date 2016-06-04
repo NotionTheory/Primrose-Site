@@ -87,14 +87,20 @@
       return undefined;
     });
   };
-  
-  exports.log = function () {
+
+  function consOut(name) {
     var args = Array.prototype.slice.call(arguments);
+    args.shift();
     args[0] = "$" + args.length + ".000000: " + args[0];
     args.push(new Date());
-    console.log(exports.fmt.apply(exports, args));
-  };
-  
+    var str = this.fmt.apply(exports, args);
+    console[name](str);
+    return str;
+  }
+
+  exports.log = consOut.bind(exports, "log");
+  exports.err = consOut.bind(exports, "error");
+
   function makeDateString(val) {
     return exports.fmt("$1/$02/$03", val.getFullYear(), val.getMonth() + 1, val.getDate());
   }
@@ -153,7 +159,7 @@
   };
   
   // Frequently, it's necessary to print the status of a
-  // hash. This exports.will run the printing, or return
+  // hash. This function will run the printing, or return
   // the word "none" if there is nothing in the hash.
   //    - formatter: a function, taking two parameters "key"
   //            and "value", that returns a single-value
