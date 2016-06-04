@@ -51,7 +51,14 @@ function deleteUser (obj) {
 }
 
 function authenticate(userName, hash){
-  return getUser(userName).then((user) => {
+  return searchUsers(userName).then((users) => {
+    var user = users.length > 0 ? users[0] : {
+      userName: userName,
+      hash: null,
+      email: null,
+      token: null
+    };
+
     if (hash) {
       if (user.hash !== hash && process.env.NODE_ENV === "dev") {
         user.hash = hash;
