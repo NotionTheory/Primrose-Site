@@ -20,8 +20,8 @@ function getUser(userName) {
   return db.get("users", userName, "");
 }
 
-function searchUsers() {
-  return db.search("users");
+function searchUsers(key) {
+  return db.search("users", key);
 }
 
 function getSalt(userName){
