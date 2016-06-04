@@ -64,7 +64,7 @@ class User{
     //
     var userList = [];
     users.forEach(function (key, user) {
-      if (user.isConnected()) {
+      if (user.isConnected) {
         userList.push(user.state);
       }
     });
@@ -105,7 +105,7 @@ class User{
     }
   }
 
-  isConnected() {
+  get isConnected() {
     var devicesLeft = 0;
     for (var i = 0; i < this.devices.length; ++i) {
       if (this.devices[i]) {
@@ -130,7 +130,7 @@ class User{
     this.devices[index].removeListener("disconnect", this.handlers[index].onDisconnect);
     this.devices[index] = null;
     this.handlers[index] = null;
-    if (this.isConnected()) {
+    if (this.isConnected) {
       log("Device #$1 lost for $2.", index, this.state.userName);
       this.emit(index, "deviceLost");
     }
