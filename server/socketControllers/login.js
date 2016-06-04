@@ -18,7 +18,7 @@ module.exports = {
     var key = null,
       identity = null;
     function receiveHash(name, hash) {
-      userDB.authenticate(identity.userName, hash, identity.email)
+      userDB.authenticate(key, hash, identity.email)
         .then((user) => {
           if (!user) {
             throw new Error(err("[$1] > failed to authenticate.", key));
