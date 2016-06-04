@@ -67,7 +67,9 @@ function authenticate(userName, hash){
 
 module.exports = {
   get: getUser,
+  set: setUser,
   search: searchUsers,
+  newSalt: makeNewSalt,
   getSalt: getSalt,
   delete: deleteUser,
   authenticate: authenticate
