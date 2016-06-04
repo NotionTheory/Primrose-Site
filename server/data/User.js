@@ -17,7 +17,7 @@ class User{
       dHeading: 0,
       isRunning: false,
       userName: info.userName,
-      app: null
+      app: info.app
     };
 
     this.salt = info.salt;
@@ -63,11 +63,12 @@ class User{
     // notify the new client of all of the users currently logged in
     //
     var userList = [];
-    users.forEach(function (key, user) {
+    for (var key in users) {
+      var user = users[key];
       if (user.isConnected) {
         userList.push(user.state);
       }
-    });
+    }
     socket.emit("userList", userList);
 
     if (index === 0) {
@@ -88,12 +89,13 @@ class User{
 
   broadcast(users, skipIndex) {
     var args = Array.prototype.slice.call(arguments, 2);
-    users.forEach(function (key, toUser) {
+    for (var key in users) {
+      var toUser = users[key];
       if (toUser.state.app === this.state.app) {
         toUser.emit.bind(toUser, (toUser.state.userName === this.state.userName) ? skipIndex : -1)
         .apply(toUser, args);
       }
-    }.bind(this));
+    }
   }
 
   emit(skipIndex) {
