@@ -85,9 +85,7 @@ function pugSite(pretty) {
       fileSize: fileSize
     });
   }))
-  .pipe(pug({
-    pretty
-  }))
+  .pipe(pug({ pretty: pretty }))
   .on("error", console.error.bind(console, "PUG ERROR"))
   .pipe(gulp.dest("."));
 }
