@@ -29,7 +29,7 @@ function getSalt(userName){
     if (process.env.NODE_ENV === "dev" && err.statusCode === 404) {
       var salt = makeNewSalt(),
         user = {
-          name: userName,
+          userName: userName,
           RowKey: "",
           salt: salt
         };
@@ -47,7 +47,7 @@ function setUser(user) {
 }
 
 function deleteUser (obj) {
-  return db.delete("users", obj.name, "");
+  return db.delete("users", obj.userName, "");
 }
 
 function authenticate(userName, hash, email) {
