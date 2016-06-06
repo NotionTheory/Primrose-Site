@@ -3,8 +3,10 @@
 const log = require("../core").log;
 
 class User{
-  constructor(info) {
+  constructor(info, app) {
+
     this.devices = [];
+
     this.handlers = [];
 
     this.listeners = {
@@ -22,7 +24,7 @@ class User{
       dHeading: 0,
       isRunning: false,
       userName: info.userName,
-      app: info.app
+      app: app
     };
 
     this.salt = info.salt;
