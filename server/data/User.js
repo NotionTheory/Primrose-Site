@@ -6,6 +6,11 @@ class User{
   constructor(info) {
     this.devices = [];
     this.handlers = [];
+
+    this.listeners = {
+      broadcast: []
+    };
+
     this.state = {
       x: 0,
       y: 0,
@@ -23,6 +28,12 @@ class User{
     this.salt = info.salt;
     this.hash = info.hash;
     this.email = info.email;
+  }
+
+  addEventListener(evt, thunk){
+    if(this.listeners[evt]){
+      this.listeners[evt].push(thunk);
+    }
   }
 
   addDevice(socket, users) {
@@ -48,10 +59,10 @@ class User{
         this.state.heading = state.heading;
         this.state.isRunning = state.isRunning;
         this.state.app = state.app;
-        this.broadcast(users, index, "userState", this.state);
+        this.broadcast(index, "userState", this.state);
       }.bind(this),
-      onChat: User.prototype.chat.bind(this, users),
-      onDisconnect: User.prototype.disconnect.bind(this, users, index)
+      onChat: User.prototype.chat.bind(this),
+      onDisconnect: User.prototype.disconnect.bind(this, index)
     };
     socket.on("userState", handlers.onUserState);
     socket.on("chat", handlers.onChat);
@@ -75,7 +86,7 @@ class User{
       //
       // notify all of the users of a new user
       //
-      this.broadcast(users, index, "userJoin", this.state);
+      this.broadcast(index, "userJoin", this.state);
     }
     else {
       //
@@ -87,14 +98,17 @@ class User{
     }
   }
 
-  broadcast(users, skipIndex) {
-    var args = Array.prototype.slice.call(arguments, 2);
-    for (var key in users) {
-      var toUser = users[key];
-      if (toUser.state.app === this.state.app) {
-        toUser.emit.bind(toUser, (toUser.state.userName === this.state.userName) ? skipIndex : -1)
-        .apply(toUser, args);
-      }
+  broadcast(skipIndex) {
+    var args = Array.prototype.slice.call(arguments, 2),
+      evt = {
+        app: this.state.app,
+        userName: this.state.userName,
+        skipSocketIndex: skipIndex,
+        args: args
+      };
+    for(var i = 0; i < this.listeners.broadcast; ++i){
+      var thunk = this.listeners.broadcast[i];
+      thunk(evt);
     }
   }
 
@@ -117,15 +131,16 @@ class User{
     return devicesLeft > 0;
   }
 
-  chat(users, text) {
+  chat(text) {
     log("[$1]: $2", this.state.userName, text);
-    this.broadcast(users, -1, "chat", {
+    this.broadcast(-1, "chat", {
       userName: this.state.userName,
       text: text
     });
   }
 
-  disconnect(users, index) {
+  disconnect(index) {
+    var socket = this.devices[index];
     this.devices[index].removeListener("userState", this.handlers[index].onUserState);
     this.devices[index].removeListener("chat", this.handlers[index].onChat);
     this.devices[index].removeListener("logout", this.handlers[index].onDisconnect);
@@ -138,7 +153,7 @@ class User{
     }
     else {
       log("disconnect = $1.", this.state.userName);
-      this.broadcast(users, -1, "userLeft", this.state.userName);
+      this.broadcast(-1, "userLeft", this.state.userName);
       this.devices.splice(0);
     }
   }
