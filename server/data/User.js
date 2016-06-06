@@ -74,7 +74,7 @@ class User{
     var userList = [];
     for (var key in users) {
       var user = users[key];
-      if (user.isConnected) {
+      if (user.isConnected && user.state.userName !== this.state.userName) {
         userList.push(user.state);
       }
     }
