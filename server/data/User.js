@@ -26,10 +26,6 @@ class User{
       userName: info.userName,
       app: info.app
     };
-
-    this.salt = info.salt;
-    this.hash = info.hash;
-    this.email = info.email;
   }
 
   addEventListener(evt, thunk){
