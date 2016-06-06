@@ -101,14 +101,15 @@ class User{
   }
 
   broadcast(skipIndex) {
-    var args = Array.prototype.slice.call(arguments, 2),
+    var args = Array.prototype.slice.call(arguments, 1),
       evt = {
         app: this.state.app,
         userName: this.state.userName,
         skipSocketIndex: skipIndex,
         args: args
       };
-    for(var i = 0; i < this.listeners.broadcast; ++i){
+
+    for(var i = 0; i < this.listeners.broadcast.length; ++i){
       var thunk = this.listeners.broadcast[i];
       thunk(evt);
     }
