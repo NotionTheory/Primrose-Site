@@ -10,7 +10,6 @@ module.exports = function requireDirectory(path) {
     const dir = directories.shift(),
     files = fs.readdirSync(root + dir);
     files.forEach((file) => {
-      console.log(file, fileTest.test(file));
       const subpath = dir + "/" + file,
       stat = fs.lstatSync(root + subpath);
       if (stat.isDirectory()) {
