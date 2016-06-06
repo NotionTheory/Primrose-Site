@@ -4,13 +4,8 @@ log = core.log,
 err = core.err,
 User = require("../data/User"),
 userDB = require("../data/Users"),
-activeUsers = {};
-
-function makeKey(identity) {
-  return identity
-  && identity.userName
-  && identity.userName.toLocaleUpperCase().trim();
-}
+activeUsers = {},
+ERROR_MESSAGE = "Invalid userName/password.";
 
 function broadcast(evt){
   for (var key in activeUsers) {
@@ -29,48 +24,61 @@ module.exports = {
     var key = null,
     identity = null;
 
-    function receiveHash(name, hash) {
-      userDB.authenticate(key, hash, identity.email)
-      .then((user) => {
-        if (!user) {
-          throw new Error(err("[$1] > failed to authenticate.", key));
-        }
+    function receiveHash(verb, user, hash) {
+      Promise.resolve().then(()=>{
+        if (user.userName === key && (verb === "login" && user.hash === hash || verb === "signup" && user.hash === null && hash)) {
+          if(!activeUsers[key]){
+            user.app = identity.app;
+            activeUsers[key] = new User(user);
+            activeUsers[key].addEventListener("broadcast", broadcast);
+          }
+          else if (activeUsers[key].state.app !== identity.app) {
+            throw new Error(err("User [$1] tried to log into two apps: $2 and $3.", key, activeUsers[key].state.app, identity.app));
+          }
 
-        if(!activeUsers[key]){
-          activeUsers[key] = new User(user, identity.app);
-          activeUsers[key].addEventListener("broadcast", broadcast);
+          activeUsers[key].addDevice(socket, activeUsers);
+          user.lastLogin = new Date();
+          return userDB.set(user);
         }
-        else if (activeUsers[key].state.app !== identity.app) {
-          throw new Error(err("User [$1] tried to log into two apps: $2 and $3.", key, activeUsers[key].state.app, identity.app));
+        else{
+          throw new Error(ERROR_MESSAGE);
         }
-
-        activeUsers[key].addDevice(socket, activeUsers);
-      }).catch((exp) => socket.emit(name + "Failed", err(exp.message || exp)));
+      }).catch((exp) => socket.emit(verb + "Failed", err(exp.message || exp)));
     }
 
-    function userAuth(name, failOnMatch, getSalt) {
+    function userAuth(verb) {
       return (ident) => {
         identity = ident;
-        key = makeKey(identity);
+        key = identity
+        && identity.userName
+        && identity.userName.toLocaleUpperCase().trim();
         if (!key) {
-          socket.emit(name + "Failed");
-        }
+          socket.emit(verb + "Failed", ERROR_MESSAGE);
+        }          
         else {
-          log("Trying to $1 $2", name, key);
-          userDB.search(key).then((matches) => {
-            if ((matches.length > 0) === failOnMatch) {
-              socket.emit(name + "Failed");
+          log("Trying to $1 $2", verb, key);
+          userDB.search(key).then((users) => {
+            if(verb === "login" && users.length === 0 || verb === "signup" && users.length > 0){
+              socket.emit(verb + "Failed", ERROR_MESSAGE);
             }
             else {
-              socket.once("hash", receiveHash.bind(null, name));
-              socket.emit("salt", getSalt(matches));
+              var user = users[0] || {
+                userName: key,
+                salt: userDB.newSalt(),
+                hash: null,
+                email: identity.email,
+                lastLogin: null,
+                app: null
+              };
+              socket.once("hash", receiveHash.bind(null, verb, user));
+              socket.emit("salt", user.salt);
             }
           });
         }
       };
     }
 
-    socket.on("login", userAuth("login", false, (matches) => matches[0].salt));
-    socket.on("signup", userAuth("signup", true, (_) => userDB.newSalt()));
+    socket.on("login", userAuth("login"));
+    socket.on("signup", userAuth("signup"));
   }
 };
