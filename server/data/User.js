@@ -158,6 +158,7 @@ class User{
       this.broadcast(-1, "userLeft", this.state.userName);
       this.devices.splice(0);
     }
+    socket.emit("logoutComplete");
   }
 }
 
