@@ -1,7 +1,7 @@
 ﻿"use strict";
 
 const crypto = require("crypto"),
-db = require("./db.js");
+  db = require("./db.js");
 
 db.define("users", [
   ["userName", "PartitionKey", "String"]
@@ -28,8 +28,14 @@ function setUser(user) {
   return db.set("users", user).then(() => user);
 }
 
-function deleteUser (obj) {
+function deleteUser(obj) {
   return db.delete("users", obj.userName, "");
+}
+
+function deleteAll() {
+  searchUsers()
+    .then((users) => Promise.all(users.map(deleteUser)))
+    .then(() => console.log("all done"));
 }
 
 module.exports = {
@@ -37,5 +43,6 @@ module.exports = {
   set: setUser,
   search: searchUsers,
   newSalt: makeNewSalt,
-  delete: deleteUser
+  delete: deleteUser,
+  reset: deleteAll
 };
