@@ -38,6 +38,7 @@ module.exports = {
           }
 
           activeUsers[key].addDevice(socket, activeUsers);
+          user.hash = hash;
           user.lastLogin = new Date();
           return userDB.set(user);
         }
