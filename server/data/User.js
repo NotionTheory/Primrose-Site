@@ -2,7 +2,7 @@
 
 const log = require("../core").log;
 
-class User{
+class User {
   constructor(info) {
 
     this.devices = [];
@@ -13,23 +13,13 @@ class User{
       broadcast: []
     };
 
-    this.state = {
-      x: 0,
-      y: 0,
-      z: 0,
-      dx: 0,
-      dy: 0,
-      dz: 0,
-      heading: 0,
-      dHeading: 0,
-      isRunning: false,
-      userName: info.userName,
-      app: info.app
-    };
+    this.state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+    this.userName = info.userName;
+    this.app = info.app;
   }
 
-  addEventListener(evt, thunk){
-    if(this.listeners[evt]){
+  addEventListener(evt, thunk) {
+    if (this.listeners[evt]) {
       this.listeners[evt].push(thunk);
     }
   }
@@ -43,21 +33,16 @@ class User{
       ++index;
     }
 
-    log("Device added for $1", this.state.userName);
+    log("Device added for $1", this.userName);
     this.devices[index] = socket;
-    
+
     //
     // bind the events
     //
     var handlers = {
       onUserState: function (state) {
-        this.state.x = state.x;
-        this.state.y = state.y;
-        this.state.z = state.z;
-        this.state.heading = state.heading;
-        this.state.isRunning = state.isRunning;
-        this.state.app = state.app;
-        this.broadcast(index, "userState", this.state);
+        this.state = state;
+        this.broadcast(index, "userState", this.getPackage());
       }.bind(this),
       onChat: User.prototype.chat.bind(this),
       onDisconnect: User.prototype.disconnect.bind(this, index)
@@ -67,15 +52,15 @@ class User{
     socket.on("logout", handlers.onDisconnect);
     socket.on("disconnect", handlers.onDisconnect);
     this.handlers[index] = handlers;
-    
+
     //
     // notify the new client of all of the users currently logged in
     //
     var userList = [];
     for (var key in users) {
       var user = users[key];
-      if (user.isConnected && user.state.userName !== this.state.userName) {
-        userList.push(user.state);
+      if (user.isConnected && user.userName !== this.userName) {
+        userList.push(user.getPackage());
       }
     }
     socket.emit("userList", userList);
@@ -84,7 +69,7 @@ class User{
       //
       // notify all of the users of a new user
       //
-      this.broadcast(index, "userJoin", this.state);
+      this.broadcast(index, "userJoin", this.getPackage());
     }
     else {
       //
@@ -92,20 +77,24 @@ class User{
       // then update them on the user's current state.
       //
       this.emit(index, "deviceAdded");
-      socket.emit("userState", this.state);
+      socket.emit("userState", this.getPackage());
     }
+  }
+
+  getPackage() {
+    return [this.userName].concat(this.state);
   }
 
   broadcast(skipIndex) {
     var args = Array.prototype.slice.call(arguments, 1),
       evt = {
-        app: this.state.app,
-        userName: this.state.userName,
+        app: this.app,
+        userName: this.userName,
         skipSocketIndex: skipIndex,
         args: args
       };
 
-    for(var i = 0; i < this.listeners.broadcast.length; ++i){
+    for (var i = 0; i < this.listeners.broadcast.length; ++i) {
       var thunk = this.listeners.broadcast[i];
       thunk(evt);
     }
@@ -131,9 +120,9 @@ class User{
   }
 
   chat(text) {
-    log("[$1]: $2", this.state.userName, text);
+    log("[$1]: $2", this.userName, text);
     this.broadcast(-1, "chat", {
-      userName: this.state.userName,
+      userName: this.userName,
       text: text
     });
   }
@@ -147,12 +136,12 @@ class User{
     this.devices[index] = null;
     this.handlers[index] = null;
     if (this.isConnected) {
-      log("Device #$1 lost for $2.", index, this.state.userName);
+      log("Device #$1 lost for $2.", index, this.userName);
       this.emit(index, "deviceLost");
     }
     else {
-      log("disconnect = $1.", this.state.userName);
-      this.broadcast(-1, "userLeft", this.state.userName);
+      log("disconnect = $1.", this.userName);
+      this.broadcast(-1, "userLeft", this.userName);
       this.devices.splice(0);
     }
     socket.emit("logoutComplete");
