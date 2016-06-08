@@ -24,6 +24,43 @@ class User {
     }
   }
 
+  peer(fromIndex, toIndex){
+    // wire up the WebRTC handshaking
+    const fromSocket = this.devices[fromIndex],
+    toSocket = this.devices[toIndex];
+    if(fromSocket && toSocket){
+      const webrtc = ["offer", "answer", "ice"].map((evtName) =>{
+        return {
+          name: evtName,
+          thunk: (obj) => toSocket.emit(evtName, obj)
+        };
+      });
+
+      webrtc.forEach((evt) => {
+        this.handlers[fromIndex][evt.name] = evt.thunk;
+        fromSocket.on(evt.name, evt.thunk);
+      });
+
+      // notify all of the peers of the new socket
+      this.emit(fromIndex, "user", fromIndex);
+      for(var i = 0; i < this.devices.length; ++i){
+        if(i !== fromIndex){
+          fromSocket.emit("blah");
+        }
+      }
+      this.devices
+      .filter((skt) => skt && skt !== socket)
+      .forEach((skt, i) => {
+        skt.emit("user", i, index);
+        socket.emit("user", index, i);
+      });
+    }
+  }
+
+  voice(index, toUser){
+
+  }
+
   addDevice(socket, users) {
     //
     // find a slot in which to put the socket
