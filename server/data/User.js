@@ -77,18 +77,28 @@ class User {
     // bind the events
     //
     var handlers = {
-      onUserState: function (state) {
+      userState: function (state) {
         this.state = state;
         this.broadcast(index, "userState", this.getPackage());
       }.bind(this),
-      onChat: User.prototype.chat.bind(this),
-      onDisconnect: User.prototype.disconnect.bind(this, index)
+      chat: this.chat.bind(this),
+      logout: this.disconnect.bind(this, index),
+      disconnect: this.disconnect.bind(this, index),
+      peer: this.peer.bind(this, index),
+      voice: this.voice.bind(this, index),
+      offer: null,
+      answer: null,
+      ice: null
     };
-    socket.on("userState", handlers.onUserState);
-    socket.on("chat", handlers.onChat);
-    socket.on("logout", handlers.onDisconnect);
-    socket.on("disconnect", handlers.onDisconnect);
+
     this.handlers[index] = handlers;
+
+    socket.on("userState", handlers.userState);
+    socket.on("chat", handlers.chat);
+    socket.on("logout", handlers.logout);
+    socket.on("disconnect", handlers.disconnect);
+    socket.on("peer", handlers.peer);
+    socket.on("voice", handlers.voice);
 
     //
     // notify the new client of all of the users currently logged in
@@ -165,13 +175,17 @@ class User {
   }
 
   disconnect(index) {
-    var socket = this.devices[index];
-    this.devices[index].removeListener("userState", this.handlers[index].onUserState);
-    this.devices[index].removeListener("chat", this.handlers[index].onChat);
-    this.devices[index].removeListener("logout", this.handlers[index].onDisconnect);
-    this.devices[index].removeListener("disconnect", this.handlers[index].onDisconnect);
+    const socket = this.devices[index],
+      handlers = this.handlers[index];
     this.devices[index] = null;
     this.handlers[index] = null;
+
+    for(let key in handlers){
+      if(handlers[key]){
+        socket.removeListener(key, handlers[key]);        
+      }
+    }
+
     if (this.isConnected) {
       log("Device #$1 lost for $2.", index, this.userName);
       this.emit(index, "deviceLost");
