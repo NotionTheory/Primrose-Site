@@ -120,12 +120,27 @@ class User {
     }
     else {
       //
-      // notify all of the user's devices that a new device was connected,
-      // then update them on the user's current state.
+      // notify all of the other devices of the new socket.
       //
-      this.emit(index, "deviceAdded");
+      this.emit(index, "deviceAdded", index);
+      //
+      // notify the new socket of all of the other devices.
+      //
+      for(var i = 0; i < this.devices.length; ++i){
+        if(i !== index){
+           socket.emit("deviceAdded", i);
+        }
+      }
+
+      //
+      // notify the new socket of its user state.
+      //
       socket.emit("userState", this.getPackage());
     }
+    //
+    // notify the device of its own socket index.
+    //
+    socket.emit("deviceIndex", index);
   }
 
   getPackage() {
@@ -188,7 +203,7 @@ class User {
 
     if (this.isConnected) {
       log("Device #$1 lost for $2.", index, this.userName);
-      this.emit(index, "deviceLost");
+      this.emit(index, "deviceLost", index);
     }
     else {
       log("disconnect = $1.", this.userName);
