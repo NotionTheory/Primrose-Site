@@ -134,11 +134,13 @@ class Message {
     });
   }
 
+  // this needs to be a method so it can be used to send new cookies.
   static noContent(){ 
     return new Message(204);
   }
 
-  static file(fileName) {
+  static file(fileName, headers) {
+    var checkDate = headers["if-modified-since"] && Date.parse(headers["if-modified-since"]) || 0;
     return new Promise((resolve, reject) => {
       fs.lstat(fileName, (err, stat) => {
         if (err) {
@@ -148,10 +150,19 @@ class Message {
           resolve(Message.redirect(fileName + "/"));
         }
         else {
-          resolve(new Message(200, fs.createReadStream(fileName), {
-            mime: mime.lookup(fileName) || "application/octet-stream",
-            length: stat.size
-          }));
+          var modDate = new Date(stat.mtime),
+            delta = modDate.getTime() - checkDate;
+          console.log(fileName, delta, "|", modDate.toGMTString());
+          if (delta >= 1000) {
+            resolve(new Message(200, fs.createReadStream(fileName), {
+              "last-modified": modDate.toGMTString(),
+              mime: mime.lookup(fileName) || "application/octet-stream",
+              length: stat.size
+            }));
+          }
+          else {
+            resolve(Message.NotModified);
+          }
         }
       });
     });
@@ -164,6 +175,7 @@ class Message {
   }
 }
 
+Message.NotModified = new Message(304);
 Message.BadRequest = new Message(400);
 Message.Unauthorized = new Message(401);
 Message.PaymentRequired = new Message(402);

@@ -19,7 +19,7 @@ routes.push({
       if (file[file.length - 1] === "/") {
         file += "index.html";
       }
-      return Message.file(file);
+      return Message.file(file, state.headers);
     }
   }
 });
@@ -130,7 +130,8 @@ module.exports = function(serveRoot){
       return {
         url: request.url,
         body: body,
-        cookies: parseCookies(request)
+        cookies: parseCookies(request),
+        headers: request.headers
       };
     })
     .then((state) => findController(request)(state))
