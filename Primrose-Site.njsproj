@@ -230,7 +230,6 @@
     <Content Include="doc\images\editorVR\docWindow.jpg" />
     <Content Include="doc\images\editorVR\layout.jpg" />
     <Compile Include="server\controllers\logger.js" />
-    <Compile Include="server\controllers\login.js" />
     <Compile Include="server\controllers\nypl.js" />
     <Compile Include="server\data\db.js" />
     <Compile Include="server\data\User.js" />
