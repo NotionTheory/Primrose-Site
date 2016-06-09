@@ -152,7 +152,7 @@ class Message {
         else {
           var modDate = new Date(stat.mtime),
             delta = modDate.getTime() - checkDate;
-          console.log(fileName, delta, "|", modDate.toGMTString());
+
           if (delta >= 1000) {
             resolve(new Message(200, fs.createReadStream(fileName), {
               "last-modified": modDate.toGMTString(),
