@@ -10,7 +10,8 @@ class User {
     this.handlers = [];
 
     this.listeners = {
-      broadcast: []
+      broadcast: [],
+      peer: []
     };
 
     this.state = [0, 0, 0, 0, 0, 0, 0, 1];
@@ -24,41 +25,14 @@ class User {
     }
   }
 
-  peer(fromIndex, toIndex){
-    // wire up the WebRTC handshaking
-    const fromSocket = this.devices[fromIndex],
-    toSocket = this.devices[toIndex];
-    if(fromSocket && toSocket){
-      const webrtc = ["offer", "answer", "ice"].map((evtName) =>{
-        return {
-          name: evtName,
-          thunk: (obj) => toSocket.emit(evtName, obj)
-        };
-      });
-
-      webrtc.forEach((evt) => {
-        this.handlers[fromIndex][evt.name] = evt.thunk;
-        fromSocket.on(evt.name, evt.thunk);
-      });
-
-      // notify all of the peers of the new socket
-      this.emit(fromIndex, "user", fromIndex);
-      for(var i = 0; i < this.devices.length; ++i){
-        if(i !== fromIndex){
-          fromSocket.emit("blah");
-        }
-      }
-      this.devices
-      .filter((skt) => skt && skt !== socket)
-      .forEach((skt, i) => {
-        skt.emit("user", i, index);
-        socket.emit("user", index, i);
-      });
+  peer(toUser){
+    const evt = {
+      fromUser: this,
+      toUserName: toUser
+    };
+    for(var i = 0; i < this.listeners.peer.length; ++i){
+      this.listeners.peer[i](evt);
     }
-  }
-
-  voice(index, toUser){
-
   }
 
   addDevice(socket, users) {
@@ -84,8 +58,7 @@ class User {
       chat: this.chat.bind(this),
       logout: this.disconnect.bind(this, index),
       disconnect: this.disconnect.bind(this, index),
-      peer: this.peer.bind(this, index),
-      voice: this.voice.bind(this, index),
+      peer: this.peer.bind(this),
       offer: null,
       answer: null,
       ice: null
@@ -98,7 +71,6 @@ class User {
     socket.on("logout", handlers.logout);
     socket.on("disconnect", handlers.disconnect);
     socket.on("peer", handlers.peer);
-    socket.on("voice", handlers.voice);
 
     //
     // notify the new client of all of the users currently logged in
@@ -128,7 +100,7 @@ class User {
       //
       for(var i = 0; i < this.devices.length; ++i){
         if(i !== index){
-           socket.emit("deviceAdded", i);
+          socket.emit("deviceAdded", i);
         }
       }
 

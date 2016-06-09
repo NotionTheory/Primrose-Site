@@ -20,6 +20,24 @@ function broadcast(evt) {
   }
 }
 
+function peer(evt){
+  var fromUser = evt.fromUser,
+    toUser = activeUsers[evt.toUserName];
+  if(fromUser && toUser && fromUser.app === toUser.app){
+    var fromIndex = evt.fromIndex || 0,
+      toIndex = evt.toIndex || 0,
+      fromSocket = fromUser.devices[fromIndex],
+      toSocket = toUser.devices[toIndex];
+    if(fromSocket && toSocket){
+      ["offer", "answer", "ice"].forEach((evtName) =>{
+        const thunk = (obj) => toSocket.emit(evtName, obj);
+        fromUser.handlers[fromIndex][evtName] = thunk;
+        fromSocket.on(evtName, thunk);
+      });
+    }
+  }
+}
+
 module.exports = function (socket) {
   log("New connection!");
   var key = null,
@@ -32,6 +50,7 @@ module.exports = function (socket) {
           user.app = identity.app;
           activeUsers[key] = new User(user);
           activeUsers[key].addEventListener("broadcast", broadcast);
+          activeUsers[key].addEventListener("peer", peer);
         }
         else if (activeUsers[key].app !== identity.app) {
           throw new Error(err("User [$1] tried to log into two apps: $2 and $3.", key, activeUsers[key].app, identity.app));
