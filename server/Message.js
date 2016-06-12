@@ -150,6 +150,9 @@ class Message {
           resolve(Message.redirect(fileName + "/"));
         }
         else {
+          if (process.env.NODE_ENV === "dev") {
+            checkDate = 0;
+          }
           var modDate = new Date(stat.mtime),
             delta = modDate.getTime() - checkDate;
 
