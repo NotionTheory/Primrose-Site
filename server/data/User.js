@@ -25,12 +25,12 @@ class User {
     }
   }
 
-  peer(toUser){
+  peer(toUser) {
     const evt = {
       fromUser: this,
       toUserName: toUser
     };
-    for(var i = 0; i < this.listeners.peer.length; ++i){
+    for (var i = 0; i < this.listeners.peer.length; ++i){
       this.listeners.peer[i](evt);
     }
   }
