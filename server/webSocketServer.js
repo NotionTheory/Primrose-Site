@@ -20,19 +20,26 @@ function broadcast(evt) {
   }
 }
 
-function peer(evt){
+function peer(evt) {
   var fromUser = evt.fromUser,
     toUser = activeUsers[evt.toUserName];
-  if(fromUser && toUser && fromUser.app === toUser.app){
+
+  if (fromUser && toUser && fromUser.app === toUser.app) {
     var fromIndex = evt.fromIndex || 0,
       toIndex = evt.toIndex || 0,
       fromSocket = fromUser.devices[fromIndex],
       toSocket = toUser.devices[toIndex];
-    if(fromSocket && toSocket){
-      ["offer", "answer", "ice"].forEach((evtName) =>{
+
+    if (fromSocket && toSocket) {
+      ["offer", "answer", "ice"].forEach((evtName) => {
         const thunk = (obj) => toSocket.emit(evtName, obj);
         fromUser.handlers[fromIndex][evtName] = thunk;
         fromSocket.on(evtName, thunk);
+      });
+
+      toSocket.emit("user", {
+        fromUserName: evt.fromUser.userName,
+        fromSocketIndex: fromIndex
       });
     }
   }
