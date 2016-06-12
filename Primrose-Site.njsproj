@@ -241,7 +241,6 @@
     <Compile Include="server\http\post.js" />
     <Compile Include="server\http\request.js" />
     <Compile Include="server\http\sendObject.js" />
-    <Compile Include="server\socketControllers\peer.js" />
     <TypeScriptCompile Include="typings\gulp\gulp.d.ts" />
     <TypeScriptCompile Include="typings\gulp-babel\gulp-babel.d.ts" />
     <TypeScriptCompile Include="typings\gulp-cached\gulp-cached.d.ts" />
@@ -283,7 +282,6 @@
     <Folder Include="server\controllers" />
     <Folder Include="server\data" />
     <Folder Include="server\http" />
-    <Folder Include="server\socketControllers" />
     <Folder Include="stylesheets" />
     <Folder Include="templates" />
     <Folder Include="typings" />
