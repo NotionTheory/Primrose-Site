@@ -1,7 +1,6 @@
 "use strict";
 
-const http = require("http"),
-  url = require("url"),
+const url = require("url"),
   core = require("./core"),
   routes = require("./controllers").filter((r) => !!r.URLPattern),
   Message = require("./Message");

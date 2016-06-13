@@ -1,14 +1,40 @@
 "use strict";
 // start the HTTP server
 const options = require("./server/options").parse(process.argv),
+  fs = require("fs"),
   http = require("http"),
+  https = require("https"),
   path = options.path || ".",
   webServer = require("./server/webServer")(path),
-  appServer = http.createServer(webServer),
-  port = options.port || process.env.PORT || 80;
+  keys = {
+    key: maybeGetFile("../primrosevr_com.key") || maybeGetFile("primrosevr_com.key"),
+    cert: maybeGetFile("../primrosevr_com.crt") || maybeGetFile("primrosevr_com.crt"),
+    ca: maybeGetFile("../CACert.crt") || maybeGetFile("CACert.crt")
+  };
 
-console.log("Listening on port " + port);
+
 console.log("Serving from directory " + path);
+
+function maybeGetFile(file) {
+  if (fs.existsSync(file)) {
+    return fs.readFileSync(file);
+  }
+}
+
+let appServer = null,
+  isSecure = !!(keys.key && keys.cert);
+if (isSecure) {
+  console.log("starting secure server");
+  isSecure = true;
+  appServer = https.createServer(keys, webServer);
+}
+else {
+  console.log("starting insecure server", keys);
+  appServer = http.createServer(webServer)
+}
+
+const port = options.port || (isSecure ? 443 : 80);
+console.log("Listening on port " + port);
 appServer.listen(port);
 
 // start the WebSocket server
@@ -21,5 +47,5 @@ if(options.mode !== "localOnly"){
 
 // start the browser
 if (options.url) {
-  require("./server/starter")(false, port, options.url);
+  require("./server/starter")(isSecure, port, options.url);
 }

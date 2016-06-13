@@ -59,9 +59,6 @@ module.exports = function (socket) {
           activeUsers[key].addEventListener("broadcast", broadcast);
           activeUsers[key].addEventListener("peer", peer);
         }
-        else if (activeUsers[key].app !== identity.app) {
-          throw new Error(err("User [$1] tried to log into two apps: $2 and $3.", key, activeUsers[key].app, identity.app));
-        }
 
         activeUsers[key].addDevice(socket, activeUsers);
         user.hash = hash;

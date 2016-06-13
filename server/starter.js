@@ -8,7 +8,8 @@ const os = require("os"),
     }[os.platform()];
 
 module.exports = function (secure, port, startPage, startProc) {
-  port = port || 80;
+  var defaultPort = secure ? 443 : 80;
+  port = port || defaultPort;
   startPage = startPage || "";
   startProc = startProc || defaultStartProc;
   var startUrl = "http";
@@ -16,7 +17,7 @@ module.exports = function (secure, port, startPage, startProc) {
     startUrl += "s";
   }
   startUrl += "://localhost";
-  if (port !== 80) {
+  if (port !== defaultPort) {
     startUrl += ":" + port;
   }
   var startPath = startUrl + "/" + startPage;
