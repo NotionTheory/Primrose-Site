@@ -7,9 +7,9 @@ const options = require("./server/options").parse(process.argv),
   path = options.path || ".",
   webServer = require("./server/webServer")(path),
   keys = {
-    key: maybeGetFile("../primrosevr_com.key") || maybeGetFile("primrosevr_com.key"),
-    cert: maybeGetFile("../primrosevr_com.crt") || maybeGetFile("primrosevr_com.crt"),
-    ca: maybeGetFile("../CACert.crt") || maybeGetFile("CACert.crt")
+    key: maybeGetFile("../primrosevr_com.key"),
+    cert: maybeGetFile("../primrosevr_com.crt"),
+    ca: maybeGetFile("../CACert.crt")
   };
 
 
@@ -33,7 +33,7 @@ else {
   appServer = http.createServer(webServer)
 }
 
-const port = options.port || (isSecure ? 443 : 80);
+const port = options.port || process.env.PORT || (isSecure ? 443 : 80);
 console.log("Listening on port " + port);
 appServer.listen(port);
 
