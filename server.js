@@ -38,7 +38,7 @@ console.log("Listening on port " + port);
 appServer.listen(port);
 
 // start the WebSocket server
-if(options.mode !== "localOnly"){
+if(process.env.NODE_ENV !== "dev" || options.mode !== "localOnly"){
   const webSocketServer = require("./server/webSocketServer"),
   socketio = require("socket.io"),
   io = socketio.listen(appServer);
@@ -46,6 +46,6 @@ if(options.mode !== "localOnly"){
 }
 
 // start the browser
-if (options.url) {
+if (process.env.NODE_ENV === "dev" && options.url) {
   require("./server/starter")(isSecure, port, options.url);
 }
