@@ -4,7 +4,7 @@ const options = require("./server/options").parse(process.argv),
   fs = require("fs"),
   http = require("http"),
   https = require("https"),
-  path = options.path || ".",
+  path = options.path || "public",
   webServer = require("./server/webServer")(path),
   keys = {
     key: maybeGetFile("../primrosevr_com.key"),
