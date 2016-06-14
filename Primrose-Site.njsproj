@@ -146,6 +146,7 @@
     <Content Include="stylesheets\main.css" />
     <Content Include="stylesheets\main.min.css" />
     <Content Include="templates\main.jade" />
+    <Content Include="Web.config" />
     <TypeScriptCompile Include="typings\tsd.d.ts" />
     <Content Include="doc\commodore\index.html" />
     <Content Include="doc\commodore\screenshot.jpg" />
