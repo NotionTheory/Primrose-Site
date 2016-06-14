@@ -38,14 +38,12 @@ console.log("Listening on port " + port);
 appServer.listen(port);
 
 // start the WebSocket server
-if(options.mode !== "localOnly"){
-  const webSocketServer = require("./server/webSocketServer"),
-  socketio = require("socket.io"),
-  io = socketio.listen(appServer);
-  io.sockets.on("connection", webSocketServer);
-}
+const webSocketServer = require("./server/webSocketServer"),
+socketio = require("socket.io"),
+io = socketio.listen(appServer);
+io.sockets.on("connection", webSocketServer);
 
 // start the browser
-if (options.url) {
+if (process.env.NODE_ENV === "dev" && options.url) {
   require("./server/starter")(isSecure, port, options.url);
 }
