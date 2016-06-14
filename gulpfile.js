@@ -35,6 +35,18 @@ gulp.task("copy:primrose", ["build:primrose"], function () {
   .pipe(gulp.dest("."));
 });
 
+gulp.task("just:copy:primrose", function () {
+  return gulp.src(primroseInfo.files.map(function (f) {
+    f = "../Primrose/" + f;
+    if (f[f.length - 1] === "/") {
+      f += "**/*";
+    }
+    return f;
+  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"])
+    .concat(recurseDirectory("../Primrose/meeting")), { base: "../Primrose" })
+    .pipe(gulp.dest("."));
+});
+
 X("build:primrose-debug", "cd ../Primrose && gulp debug", ["copy:primrose"]);
 
 gulp.task("cssmin", ["copy:primrose"], function () {
@@ -44,7 +56,7 @@ gulp.task("cssmin", ["copy:primrose"], function () {
   .pipe(gulp.dest("stylesheets"));
 });
 
-gulp.task("zip:quickstart", ["copy:primrose"], function () {
+gulp.task("zip:quickstart", ["cssmin"], function () {
   return gulp.src(["quickstart/**/*"])
   .pipe(zip("PrimroseQuickstart.zip"))
   .pipe(gulp.dest("."));
@@ -91,7 +103,7 @@ function pugSite(pretty) {
 }
 }
 
-gulp.task("pug:site", ["zip:quickstart", "build:primrose-debug"], pugSite(false));
+gulp.task("pug:site", ["zip:quickstart"], pugSite(false));
 gulp.task("just:pug:site", pugSite(true));
 
 gulp.task("default", ["pug:site", "cssmin"]);

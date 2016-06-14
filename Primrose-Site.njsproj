@@ -15,7 +15,7 @@
     <EnableTypeScript>true</EnableTypeScript>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-    <ScriptArguments>--path=.. --url=Primrose/meeting/test.html</ScriptArguments>
+    <ScriptArguments>--path=.. --url=Primrose/meeting/</ScriptArguments>
     <StartWebBrowser>False</StartWebBrowser>
     <LaunchUrl>Primrose/meeting/</LaunchUrl>
     <NodejsPort>80</NodejsPort>
