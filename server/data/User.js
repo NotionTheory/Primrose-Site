@@ -16,7 +16,7 @@ class User {
 
     this.state = [0, 0, 0, 0, 0, 0, 0, 1];
     this.userName = info.userName;
-    this.app = info.app;
+    this.app = null;
   }
 
   addEventListener(evt, thunk) {
@@ -35,7 +35,7 @@ class User {
     }
   }
 
-  addDevice(socket, users) {
+  addDevice(socket, app, users) {
     //
     // find a slot in which to put the socket
     //
@@ -72,13 +72,22 @@ class User {
     socket.on("disconnect", handlers.disconnect);
     socket.on("peer", handlers.peer);
 
+    if (this.app !== null && this.app !== app) {
+      this.leave();
+    }
+
+    //
+    // register what app the user is logged into
+    //
+    this.app = app;
+
     //
     // notify the new client of all of the users currently logged in
     //
     var userList = [];
     for (var key in users) {
       var user = users[key];
-      if (user.isConnected && user.userName !== this.userName) {
+      if (user.isConnected && user.userName !== this.userName && user.app === this.app) {
         userList.push(user.getPackage());
       }
     }
@@ -179,10 +188,14 @@ class User {
     }
     else {
       log("disconnect = $1.", this.userName);
-      this.broadcast(-1, "userLeft", this.userName);
+      this.leave();
       this.devices.splice(0);
     }
     socket.emit("logoutComplete");
+  }
+
+  leave() {
+    this.broadcast(-1, "userLeft", this.userName);
   }
 }
 

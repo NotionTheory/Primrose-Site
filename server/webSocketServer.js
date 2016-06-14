@@ -60,7 +60,7 @@ module.exports = function (socket) {
           activeUsers[key].addEventListener("peer", peer);
         }
 
-        activeUsers[key].addDevice(socket, activeUsers);
+        activeUsers[key].addDevice(socket, identity.app, activeUsers);
         user.hash = hash;
         user.lastLogin = new Date();
         return userDB.set(user);
