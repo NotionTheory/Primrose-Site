@@ -24,28 +24,21 @@ function X(name, cmd, deps){
 
 X("build:primrose", "cd ../Primrose && gulp release");
 
-gulp.task("copy:primrose", ["build:primrose"], function () {
+function doCopy () {
   return gulp.src(primroseInfo.files.map(function (f) {
     f = "../Primrose/" + f;
     if (f[f.length - 1] === "/") {
       f += "**/*";
     }
     return f;
-  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]), { base: "../Primrose" })
+  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*", "../Primrose/meeting/**/*"]), 
+  { base: "../Primrose" })
   .pipe(gulp.dest("."));
-});
+}
 
-gulp.task("just:copy:primrose", function () {
-  return gulp.src(primroseInfo.files.map(function (f) {
-    f = "../Primrose/" + f;
-    if (f[f.length - 1] === "/") {
-      f += "**/*";
-    }
-    return f;
-  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"])
-    .concat(recurseDirectory("../Primrose/meeting")), { base: "../Primrose" })
-    .pipe(gulp.dest("."));
-});
+gulp.task("copy:primrose", ["build:primrose"], doCopy);
+
+gulp.task("just:copy:primrose", doCopy);
 
 X("build:primrose-debug", "cd ../Primrose && gulp debug", ["copy:primrose"]);
 
