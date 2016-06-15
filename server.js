@@ -1,52 +1,25 @@
 "use strict";
-// start the HTTP server
-const options = require("./server/options").parse(process.argv),
-  fs = require("fs"),
-  http = require("http"),
-  https = require("https"),
-  path = options.path || ".",
-  webServer = require("./server/webServer")(path),
-  keys = {
-    key: maybeGetFile("../primrosevr_com.key"),
-    cert: maybeGetFile("../primrosevr_com.crt"),
-    ca: maybeGetFile("../CACert.crt")
-  },
-  isSecure = !!(keys.key && keys.cert);
+var err = require("./server/core").err;
 
-
-console.log("Serving from directory " + path);
-
-function maybeGetFile(file) {
-  if (fs.existsSync(file)) {
-    return fs.readFileSync(file);
-  }
-}
-
-let appServer = null;
-if (isSecure) {
-  console.log("starting secure server");
-  appServer = https.createServer(keys, webServer);
-}
-else {
-  console.log("starting insecure server", keys);
-  appServer = http.createServer(webServer);
-}
-
-const port = options.port || process.env.PORT || (isSecure ? 443 : 80);
-console.log("Listening on port " + port);
-appServer.listen(port);
-
-// start the WebSocket server
-if(process.env.NODE_ENV !== "dev" || options.mode !== "localOnly"){
-  console.log("Starting WebSocket server");
-  const webSocketServer = require("./server/webSocketServer"),
-  socketio = require("socket.io"),
-  io = socketio.listen(appServer);
+try{  
+  // start the HTTP server
+  var options = require("./server/options").parse(process.argv),
+    http = require("http"),
+    socketio = require("socket.io"),
+    path = options.path || ".",
+    port = options.port || process.env.PORT,
+    webServer = require("./server/webServer")(path),
+    webSocketServer = require("./server/webSocketServer"),
+    appServer = http.createServer(webServer),
+    io = socketio.listen(appServer);
+  
+  
+  console.log("Serving from directory " + path);
+  console.log("Listening on port " + port);
+  
+  appServer.listen(port);
   io.sockets.on("connection", webSocketServer);
 }
-
-// start the browser
-if (process.env.NODE_ENV === "dev" && options.url) {
-  console.log("Starting browser");
-  require("./server/starter")(isSecure, port, options.url);
+catch(exp){
+  err(exp.message);
 }
