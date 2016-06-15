@@ -89,8 +89,7 @@
   };
 
   function consOut(name) {
-    var args = Array.prototype.slice.call(arguments);
-    args.shift();
+    var args = Array.prototype.slice.call(arguments, 1);
     args[0] = "$" + args.length + ".000000: " + args[0];
     args.push(new Date());
     var str = this.fmt.apply(exports, args);
