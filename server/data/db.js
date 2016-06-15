@@ -77,7 +77,10 @@ module.exports = {
       map.types[objProperty] = type;
     }
 
-    return map.ready;
+    return map.ready.catch((exp)=>{
+      console.error("Error setting up the database connection.", exp.message || exp);
+      throw exp;
+    });
   },
 
   ready: (table) => meta[table] && meta[table].ready,
