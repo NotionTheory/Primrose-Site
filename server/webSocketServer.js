@@ -6,7 +6,7 @@ const core = require("./core"),
   User = require("./data/User"),
   userDB = require("./data/Users"),
   activeUsers = {},
-  DEBUG = process.env.ENV === "dev",
+  DEBUG = process.env.NODE_ENV === "dev",
   ERROR_MESSAGE = "Invalid userName/password.";
 
 function broadcast(evt) {
