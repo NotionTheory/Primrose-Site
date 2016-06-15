@@ -2,6 +2,7 @@
 
 const url = require("url"),
   core = require("./core"),
+  onError = core.err,
   routes = require("./controllers").filter((r) => !!r.URLPattern),
   Message = require("./Message");
 
@@ -32,6 +33,7 @@ function findController(request) {
     var route = routes[i],
       pattern = route.URLPattern,
       match = url.match(pattern);
+    
     if (match) {
       var handlers = route[method];
       if (handlers) {
@@ -134,7 +136,10 @@ module.exports = function (serveRoot) {
         };
       })
       .then((state) => findController(request)(state))
-      .catch((err) => (err instanceof Message) ? err : Message.InternalServerError)
+      .catch((err) => {
+        onError(err);
+        return (err instanceof Message) ? err : Message.InternalServerError;
+      })
       .then((msg) => msg.send(response));
   };
 };
