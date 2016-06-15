@@ -18,7 +18,7 @@
     <ScriptArguments>--path=.. --url=Primrose/meeting/</ScriptArguments>
     <StartWebBrowser>False</StartWebBrowser>
     <LaunchUrl>Primrose/meeting/</LaunchUrl>
-    <NodejsPort>80</NodejsPort>
+    <NodejsPort>443</NodejsPort>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
