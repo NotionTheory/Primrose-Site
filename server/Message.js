@@ -122,7 +122,7 @@ class Message {
     });
   }
 
-   static text(txt) {
+  static text(txt) {
     return new Message(200, txt, {
       mime: "text/plain"
     });
