@@ -29,7 +29,7 @@ if (isSecure) {
 }
 else {
   console.log("starting insecure server", keys);
-  appServer = http.createServer(webServer)
+  appServer = http.createServer(webServer);
 }
 
 const port = options.port || process.env.PORT || (isSecure ? 443 : 80);
@@ -38,6 +38,7 @@ appServer.listen(port);
 
 // start the WebSocket server
 if(process.env.NODE_ENV !== "dev" || options.mode !== "localOnly"){
+  console.log("Starting WebSocket server");
   const webSocketServer = require("./server/webSocketServer"),
   socketio = require("socket.io"),
   io = socketio.listen(appServer);
@@ -46,5 +47,6 @@ if(process.env.NODE_ENV !== "dev" || options.mode !== "localOnly"){
 
 // start the browser
 if (process.env.NODE_ENV === "dev" && options.url) {
+  console.log("Starting browser");
   require("./server/starter")(isSecure, port, options.url);
 }
