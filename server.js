@@ -42,9 +42,6 @@ if(process.env.NODE_ENV !== "dev" || options.mode !== "localOnly"){
   const webSocketServer = require("./server/webSocketServer"),
   socketio = require("socket.io"),
   io = socketio.listen(appServer);
-  io.configure(function () {
-    io.set("transports", ["websocket", "xhr-polling"]);
-  });
   io.sockets.on("connection", webSocketServer);
 }
 
