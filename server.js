@@ -10,7 +10,8 @@ const options = require("./server/options").parse(process.argv),
     key: maybeGetFile("../primrosevr_com.key"),
     cert: maybeGetFile("../primrosevr_com.crt"),
     ca: maybeGetFile("../CACert.crt")
-  };
+  },
+  isSecure = !!(keys.key && keys.cert);
 
 
 console.log("Serving from directory " + path);
@@ -21,11 +22,9 @@ function maybeGetFile(file) {
   }
 }
 
-let appServer = null,
-  isSecure = !!(keys.key && keys.cert);
+let appServer = null;
 if (isSecure) {
   console.log("starting secure server");
-  isSecure = true;
   appServer = https.createServer(keys, webServer);
 }
 else {
