@@ -31,7 +31,7 @@ function doCopy () {
       f += "**/*";
     }
     return f;
-  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*", "../Primrose/meeting/**/*"]), 
+  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]), 
   { base: "../Primrose" })
   .pipe(gulp.dest("."));
 }
