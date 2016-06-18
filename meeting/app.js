@@ -1,9 +1,10 @@
 "use strict";
 
 var MEETING_ID_PATTERN = /\bid=(\w+)/,
+  TEST_USER_NAME_PATTERN = /\bu=(\w+)/,
   USER_NAME_PATTERN = /Primrose:user:(\w+)/,
-  NETWORK_DT = 0.25,
-  idSpec = location.hash.match(MEETING_ID_PATTERN),
+  idSpec = location.search.match(MEETING_ID_PATTERN),
+  hasMeetingID = !!idSpec,
   meetingID = idSpec && idSpec[1] || (Math.random() * Math.log(Number.MAX_VALUE)).toString(36).replace(".", ""),
   appKey = "Primrose:Meeting:" + meetingID,
   audio = new Primrose.Output.Audio3D(),
@@ -34,11 +35,19 @@ var MEETING_ID_PATTERN = /\bid=(\w+)/,
   users = {},
   socket,
   avatarFactory,
-  userNameSpec = document.cookie.match(USER_NAME_PATTERN),
+  testUserNameSpec = location.search.match(TEST_USER_NAME_PATTERN),
+  isTest = !!testUserNameSpec,
+  userNameSpec = testUserNameSpec || document.cookie.match(USER_NAME_PATTERN),
   userName = userNameSpec && userNameSpec[1] || "",
   deviceIndex;
 
-location.hash = "id=" + meetingID;
+if(!hasMeetingID){
+  var state = "?id=" + meetingID;
+  if(isTest){
+    state += "&u=" + userName;
+  }
+  history.pushState(null, "Room ID: " + meetingID, state);
+}
 
 ctrls2D.switchMode.addEventListener("click", showSignup);
 ctrls2D.connect.addEventListener("click", setLoginValues.bind(null, ctrls2D, ctrls3D.signup, ctrls3D.login));
@@ -115,6 +124,9 @@ function listUsers(newUsers) {
   while (newUsers.length > 0) {
     promise = promise.then(addUser(newUsers.shift()));
   }
+  promise.then(function(){
+    console.log("All users added");
+  });
 }
 
 function logAudio(name, stream) {
@@ -129,70 +141,11 @@ function logAudio(name, stream) {
 
 function addUser(state) {
   var key = state[0],
-    avatar = avatarFactory.clone(),
-    name = textured(text3D(0.1, key), env.options.foregroundColor),
-    bounds = name.geometry.boundingBox.max;
-  
-  avatar.traverse(function (obj) {
-    if (obj.name === "AvatarBelt") {
-      textured(obj, Primrose.Random.color());
-    }
-    else if (obj.name === "AvatarHead") {
-      avatar.head = obj;
-    }
-  });
-
-  avatar.dHeading = 0;
-  avatar.name = key;
-  avatar.velocity = new THREE.Vector3();
-  avatar.time = 0;
-
-  name.rotation.set(0, Math.PI, 0);
-  name.position.set(bounds.x / 2, bounds.y, 0);
-  if(avatar.head){
-    avatar.head.add(name);
-    avatar.head.dQuaternion = new THREE.Quaternion();
-  }
-  else{
-    avatar.add(name);
-    name.position.y += env.avatarHeight;
-  }
-
-  env.scene.add(avatar);
-
-  users[key] = avatar;
-
+    user = new Primrose.RemoteUser(key, avatarFactory, env.options.foregroundColor);
+  users[key] = user;
+  env.scene.add(user.avatar);
   updateUser(state);
-
-  console.log("Connecting from %s to %s", userName, key);
-  return micReady.then(function (outAudio) {
-    avatar.peer = new Primrose.WebRTCSocket(socket, userName, key, outAudio);
-    avatar.peer.ready
-      .then(function (inAudio) {
-        avatar.audioElement = new Audio();
-        setAudioStream(avatar.audioElement, inAudio);
-        avatar.audioElement.controls = false;
-        avatar.audioElement.autoplay = true;
-        avatar.audioElement.crossOrigin = "anonymous";
-        document.body.appendChild(avatar.audioElement);
-
-        var ctx = env.audio.context;
-        avatar.audioStream = ctx.createMediaStreamSource(inAudio);
-        avatar.gain = ctx.createGain();
-        avatar.panner = ctx.createPanner();
-
-        avatar.audioStream.connect(avatar.gain);
-        avatar.gain.connect(avatar.panner);
-        avatar.panner.connect(env.audio.mainVolume);
-
-        avatar.panner.coneInnerAngle = 180;
-        avatar.panner.coneOuterAngle = 360;
-        avatar.panner.coneOuterGain = 0.1;
-        avatar.panner.panningModel = "HRTF";
-        avatar.panner.distanceModel = "exponential";
-      })
-      .catch(console.error.bind(console, "error"));
-  });
+  return user.peer(socket, micReady, userName, env.audio);
 }
 
 function receiveChat(evt) {
@@ -202,25 +155,9 @@ function receiveChat(evt) {
 function updateUser(state) {
   var key = state[0];
   if (key !== userName) {
-    var avatar = users[key];
-    if (avatar) {
-      avatar.time = 0;
-
-      avatar.dHeading = (state[1] - avatar.rotation.y) / NETWORK_DT;
-
-      avatar.velocity.set(state[2], state[3], state[4]);
-      avatar.velocity.sub(avatar.position);
-      avatar.velocity.multiplyScalar(1 / NETWORK_DT);
-
-      avatar.head.dQuaternion.set(state[7], state[5], state[6], state[8]);
-      avatar.head.dQuaternion.x -= avatar.head.quaternion.x;
-      avatar.head.dQuaternion.y -= avatar.head.quaternion.y;
-      avatar.head.dQuaternion.z -= avatar.head.quaternion.z;
-      avatar.head.dQuaternion.w -= avatar.head.quaternion.w;
-      avatar.head.dQuaternion.x /= NETWORK_DT;
-      avatar.head.dQuaternion.y /= NETWORK_DT;
-      avatar.head.dQuaternion.z /= NETWORK_DT;
-      avatar.head.dQuaternion.w /= NETWORK_DT;
+    var user = users[key];
+    if (user) {
+      user.state = state;
     }
     else {
       console.error("Unknown user", key);
@@ -240,16 +177,12 @@ function updateUser(state) {
 
 function removeUser(key) {
   console.log("User %s logging off.", key);
-  var avatar = users[key];
-  env.scene.remove(avatar);
-  if (avatar.peer) {
-    avatar.peer.close();
-    if (avatar.audioElement) {
-      avatar.audioElement.pause();
-      document.body.removeChild(avatar.audioElement);
-    }
+  var user = users[key];
+  if(user){
+    user.unpeer();
+    env.scene.remove(user.avatar);
+    delete users[key];
   }
-  delete users[key];
 }
 
 function authFailed(name) {
@@ -341,8 +274,8 @@ function environmentReady() {
 function update(dt) {
   if (socket && deviceIndex === 0) {
     lastNetworkUpdate += dt;
-    if (lastNetworkUpdate >= NETWORK_DT) {
-      lastNetworkUpdate -= NETWORK_DT;
+    if (lastNetworkUpdate >= Primrose.RemoteUser.NETWORK_DT) {
+      lastNetworkUpdate -= Primrose.RemoteUser.NETWORK_DT;
       var newState = [
         env.player.heading,
         env.player.position.x,
@@ -363,25 +296,7 @@ function update(dt) {
     }
   }
   for (var key in users) {
-    var avatar = users[key];
-    avatar.time += dt;
-    if (avatar.time >= NETWORK_DT) {
-      avatar.velocity.multiplyScalar(0.5);
-      avatar.dHeading *= 0.5;
-      avatar.head.dQuaternion.x *= 0.5;
-      avatar.head.dQuaternion.y *= 0.5;
-      avatar.head.dQuaternion.z *= 0.5;
-      avatar.head.dQuaternion.w *= 0.5;
-    }
-    avatar.position.add(avatar.velocity.clone().multiplyScalar(dt));
-    avatar.rotation.y += avatar.dHeading * dt;
-    avatar.head.quaternion.x += avatar.head.dQuaternion.x * dt;
-    avatar.head.quaternion.y += avatar.head.dQuaternion.y * dt;
-    avatar.head.quaternion.z += avatar.head.dQuaternion.z * dt;
-    avatar.head.quaternion.w += avatar.head.dQuaternion.w * dt;
-    if(avatar.panner){
-      avatar.panner.setPosition(avatar.position.x, avatar.position.y, avatar.position.z);
-      avatar.panner.setOrientation(Math.sin(avatar.rotation.y), 0, Math.cos(avatar.rotation.y));
-    }
+    var user = users[key];
+    user.update(dt);
   }
 }
