@@ -14,7 +14,7 @@ class User {
       peer: []
     };
 
-    this.state = [0, 0, 0, 0, 0, 0, 0, 1];
+    this.state = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
     this.userName = info.userName;
     this.app = null;
   }
