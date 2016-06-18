@@ -39,7 +39,8 @@ function peer(evt) {
 
       toSocket.emit("user", {
         fromUserName: evt.fromUser.userName,
-        fromSocketIndex: fromIndex
+        fromSocketIndex: fromIndex,
+        toUserName: evt.toUserName
       });
     }
   }
