@@ -97,6 +97,19 @@ class User {
     }
     else {
       //
+      // notify all of the other devices of the new socket.
+      //
+      this.emit(index, "deviceAdded", index);
+      //
+      // notify the new socket of all of the other devices.
+      //
+      for(var i = 0; i < this.devices.length; ++i){
+        if(i !== index){
+          socket.emit("deviceAdded", i);
+        }
+      }
+
+      //
       // notify the new socket of its user state.
       //
       socket.emit("userState", this.getPackage());
