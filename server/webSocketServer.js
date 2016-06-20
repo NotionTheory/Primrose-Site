@@ -21,12 +21,12 @@ function broadcast(evt) {
 }
 
 function peer(evt) {
-  var fromUser = evt.fromUser,
+  var fromUser = activeUsers[evt.fromUserName],
     toUser = activeUsers[evt.toUserName];
 
   if (fromUser && toUser && fromUser.app === toUser.app) {
-    var fromIndex = evt.fromIndex || 0,
-      toIndex = evt.toIndex || 0,
+    var fromIndex = evt.fromUserIndex || 0,
+      toIndex = evt.toUserIndex || 0,
       fromSocket = fromUser.devices[fromIndex],
       toSocket = toUser.devices[toIndex];
 
@@ -37,11 +37,10 @@ function peer(evt) {
         fromSocket.on(evtName, thunk);
       });
 
-      toSocket.emit("user", {
-        fromUserName: evt.fromUser.userName,
-        fromSocketIndex: fromIndex,
-        toUserName: evt.toUserName
-      });
+      toSocket.emit("peer", evt);
+    }
+    else{
+      console.error("peer error", evt);
     }
   }
 }

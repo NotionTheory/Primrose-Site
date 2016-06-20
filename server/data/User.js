@@ -25,11 +25,7 @@ class User {
     }
   }
 
-  peer(toUser) {
-    const evt = {
-      fromUser: this,
-      toUserName: toUser
-    };
+  peer(evt) {
     for (var i = 0; i < this.listeners.peer.length; ++i){
       this.listeners.peer[i](evt);
     }
@@ -100,19 +96,6 @@ class User {
       this.broadcast(index, "userJoin", this.getPackage());
     }
     else {
-      //
-      // notify all of the other devices of the new socket.
-      //
-      this.emit(index, "deviceAdded", index);
-      //
-      // notify the new socket of all of the other devices.
-      //
-      for(var i = 0; i < this.devices.length; ++i){
-        if(i !== index){
-          socket.emit("deviceAdded", i);
-        }
-      }
-
       //
       // notify the new socket of its user state.
       //
