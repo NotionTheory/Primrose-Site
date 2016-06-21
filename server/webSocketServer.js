@@ -6,8 +6,7 @@ const core = require("./core"),
   User = require("./data/User"),
   userDB = require("./data/Users"),
   activeUsers = {},
-  DEBUG = process.env.NODE_ENV === "dev",
-  ERROR_MESSAGE = "Invalid userName/password.";
+  DEBUG = process.env.NODE_ENV === "dev";
 
 function broadcast(evt) {
   for (var key in activeUsers) {
@@ -65,13 +64,16 @@ module.exports = function (socket) {
         user.lastLogin = new Date();
         return userDB.set(user);
       }
-      else if (DEBUG) {
-        throw new Error(err("verb: $1, user.userName: $2, key: $3, user.hash: $4, hash: $5", verb, user.userName, key, user.hash, hash));
+      else if(verb === "login") {
+        throw new Error("user name and password do not match.");
       }
       else {
-        throw new Error(ERROR_MESSAGE);
+        throw new Error("no password was received at the server.");
       }
-    }).catch((exp) => socket.emit(verb + "Failed", err(exp.message || exp)));
+    }).catch((exp) => {
+      socket.emit(verb + "Failed", exp.message);
+      socket.emit("errorDetail", err(exp.message || exp));
+    });
   }
 
   function userAuth(verb) {
@@ -95,19 +97,19 @@ module.exports = function (socket) {
             socket.once("hash", receiveHash.bind(null, verb, user));
             socket.emit("salt", user.salt);
           }
-          else if (DEBUG) {
-            socket.emit(verb + "Failed", err("verb: $1, #users: $2", verb, users.length));
+          else if(verb === "login") {
+            socket.emit("loginFailed", "the user '[USER]' does not exist.");
           }
           else {
-            socket.emit(verb + "Failed", ERROR_MESSAGE);
+            socket.emit("signupFailed", "the user name '[USER]' already exists.");
           }
         });
       }
-      else if (DEBUG) {
-        socket.emit(verb + "Failed", err("have identity: $1, userName: $2, key: $3", !!identity, identity && identity.userName, key));
-      }
       else {
-        socket.emit(verb + "Failed", ERROR_MESSAGE);
+        socket.emit(verb + "Failed", "no user name was received at the server.");
+        if (DEBUG) {
+          socket.emit("errorDetail", err("have identity: $1, userName: $2, key: $3", !!identity, identity && identity.userName, key));
+        }
       }
     };
   }
