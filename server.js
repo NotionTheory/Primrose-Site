@@ -6,7 +6,8 @@ const options = require("./server/options").parse(process.argv),
   https = require("https"),
   path = options.path || ".",
   webServer = require("./server/webServer")(path),
-  keys = process.env.NODE_ENV === "dev" && {
+  isDev = options.mode === "dev" || process.env.NODE_ENV === "dev",
+  keys = isDev && {
     key: maybeGetFile("../primrosevr_com.key"),
     cert: maybeGetFile("../primrosevr_com.crt"),
     ca: maybeGetFile("../CACert.crt")
@@ -22,23 +23,29 @@ function maybeGetFile(file) {
   }
 }
 
-let appServer = null;
-if (isSecure) {
-  console.log("starting secure server");
-  appServer = https.createServer(keys, webServer);
-  http.createServer(require("./server/redirector")).listen(80);
-}
-else {
-  console.log("starting insecure server", keys);
-  appServer = http.createServer(webServer)
+if(options.port !== undefined){
+  options.port = parseFloat(options.port);
 }
 
 const port = options.port || process.env.PORT || (isSecure ? 443 : 80);
 console.log("Listening on port " + port);
-appServer.listen(port);
+
+let appServer = null;
+if (isSecure) {
+  console.log("starting secure server");
+  appServer = https.createServer(keys, webServer);
+  appServer.listen(port);
+  const portB = port - 443 + 80;
+  http.createServer(require("./server/redirector")(port)).listen(portB);
+}
+else {
+  console.log("starting insecure server", keys);
+  appServer = http.createServer(webServer)
+  appServer.listen(port);
+}
 
 // start the WebSocket server
-if(process.env.NODE_ENV !== "dev" || options.mode !== "localOnly"){
+if(!isDev || options.mode !== "localOnly"){
   const webSocketServer = require("./server/webSocketServer"),
   socketio = require("socket.io"),
   io = socketio.listen(appServer);
@@ -46,6 +53,6 @@ if(process.env.NODE_ENV !== "dev" || options.mode !== "localOnly"){
 }
 
 // start the browser
-if (process.env.NODE_ENV === "dev" && options.url) {
+if (isDev && options.url) {
   require("./server/starter")(isSecure, port, options.url);
 }

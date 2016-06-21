@@ -4,9 +4,10 @@ const core = require("./core"),
   log = core.log,
   err = core.err,
   User = require("./data/User"),
-  userDB = require("./data/Users"),
+  userDB = require("./data/users"),
   activeUsers = {},
-  DEBUG = process.env.NODE_ENV === "dev";
+  options = require("./options").parse(process.argv),
+  isDev = options.mode === "dev" || process.env.NODE_ENV === "dev";
 
 function broadcast(evt) {
   for (var key in activeUsers) {
@@ -107,7 +108,7 @@ module.exports = function (socket) {
       }
       else {
         socket.emit(verb + "Failed", "no user name was received at the server.");
-        if (DEBUG) {
+        if (isDev) {
           socket.emit("errorDetail", err("have identity: $1, userName: $2, key: $3", !!identity, identity && identity.userName, key));
         }
       }

@@ -1,6 +1,8 @@
 ﻿"use strict";
 
-const core = require("./core.js"),
+const options = require("./options").parse(process.argv),
+  isDev = options.mode === "dev" || process.env.NODE_ENV === "dev",
+  core = require("./core.js"),
   fs = require("fs"),
   http = require("http"),
   mime = require("mime"),
@@ -150,7 +152,7 @@ class Message {
           resolve(Message.redirect(fileName + "/"));
         }
         else {
-          if (process.env.NODE_ENV === "dev") {
+          if (isDev) {
             checkDate = 0;
           }
           var modDate = new Date(stat.mtime),

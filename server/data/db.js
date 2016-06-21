@@ -1,7 +1,9 @@
 ﻿"use strict";
 
 const azure = require("azure-storage"),
-  connectionString = process.env.NODE_ENV === "dev" && require("./secrets").connectionString || null,
+  options = require("../options").parse(process.argv),
+  isDev = options.mode === "dev" || process.env.NODE_ENV === "dev",
+  connectionString = isDev && require("./secrets.json").connectionString || null,
   tables = azure.createTableService(connectionString),
   ent = azure.TableUtilities.entityGenerator,
   meta = {};
