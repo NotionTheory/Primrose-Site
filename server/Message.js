@@ -135,7 +135,7 @@ class Message {
   }
 
   // this needs to be a method so it can be used to send new cookies.
-  static noContent(){ 
+  static noContent(){
     return new Message(204);
   }
 
@@ -173,6 +173,12 @@ class Message {
 
   static redirect(url) {
     return new Message(307, null, {
+      "location": url
+    });
+  }
+
+  static movedPermanently(url){
+    return new Message(301, null, {
       "location": url
     });
   }

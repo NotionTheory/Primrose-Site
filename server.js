@@ -26,6 +26,7 @@ let appServer = null;
 if (isSecure) {
   console.log("starting secure server");
   appServer = https.createServer(keys, webServer);
+  http.createServer(require("./server/redirector")).listen(80);
 }
 else {
   console.log("starting insecure server", keys);
