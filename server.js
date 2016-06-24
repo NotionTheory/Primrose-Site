@@ -14,7 +14,7 @@ const options = require("./server/options").parse(process.argv),
   },
   isSecure = !!(keys && keys.key && keys.cert);
 
-
+console.log("Mode is " + options.mode);
 console.log("Serving from directory " + path);
 
 function maybeGetFile(file) {
