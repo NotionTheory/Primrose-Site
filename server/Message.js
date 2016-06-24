@@ -141,15 +141,15 @@ class Message {
     return new Message(204);
   }
 
-  static file(fileName, headers) {
-    var checkDate = headers["if-modified-since"] && Date.parse(headers["if-modified-since"]) || 0;
+  static file(fileName, state) {
+    var checkDate = state.headers["if-modified-since"] && Date.parse(state.headers["if-modified-since"]) || 0;
     return new Promise((resolve, reject) => {
       fs.lstat(fileName, (err, stat) => {
         if (err) {
           resolve(Message.NotFound);
         }
         else if (stat.isDirectory()) {
-          resolve(Message.redirect(fileName + "/"));
+          resolve(Message.redirect(state.url + "/"));
         }
         else {
           if (isDev) {

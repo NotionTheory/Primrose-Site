@@ -15,11 +15,10 @@ routes.push({
     "*/*": function (state) {
       var parts = url.parse(state.url),
         file = root + parts.pathname;
-
       if (file[file.length - 1] === "/") {
         file += "index.html";
       }
-      return Message.file(file, state.headers);
+      return Message.file(file, state);
     }
   }
 });
@@ -33,7 +32,7 @@ function findController(request) {
     var route = routes[i],
       pattern = route.URLPattern,
       match = url.match(pattern);
-    
+
     if (match) {
       var handlers = route[method];
       if (handlers) {
