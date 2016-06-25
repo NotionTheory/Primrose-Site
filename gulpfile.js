@@ -75,6 +75,39 @@ function fileSize(file) {
 }
 
 function pugSite(pretty) {
+
+  var files = fs.readdirSync("archive"),
+    maxMajor = 0,
+    maxMinor = 0,
+    maxRevis = 0;
+
+  files.forEach(function(f){
+    var match = f.match(/Primrose-(\d+)\.(\d+)\.(\d+)\.js/);
+    if(match){
+      var major = parseFloat(match[1]),
+        minor = parseFloat(match[2]),
+        revis = parseFloat(match[3]);
+      if(major > maxMajor){
+        maxMajor = major;
+        maxMinor = 0;
+        maxRevis = 0;
+      }
+
+      if(major === maxMajor){
+        if(minor > maxMinor){
+          maxMinor = minor;
+          maxRevis = 0;
+        }
+
+        if(minor === maxMinor){
+          maxRevis = Math.max(maxRevis, revis);
+        }
+      }
+    }
+  });
+
+  var version = maxMajor + "." + maxMinor + "." + maxRevis;
+
   return function(){gulp.src(["*.jade"], { base: "." })
   .pipe(rename(function (path) {
     path.extname = "";
@@ -90,7 +123,7 @@ function pugSite(pretty) {
     parts.pop();
 
     callback(null, {
-      version: primroseInfo.version || "N/A",
+      version: version || "N/A",
       filePath: name,
       cssExt: ".css",
       jsExt: ".js",
