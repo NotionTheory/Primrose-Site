@@ -4,13 +4,14 @@ cssmin = require("gulp-cssmin"),
 data = require("gulp-data"),
 exec = require("child_process").exec,
 fs = require("fs"),
-primroseInfo = require("../Primrose/package.json"),
 pug = require("gulp-pug"),
 recurseDirectory = require("./server/recurseDirectory"),
 rename = require("gulp-rename"),
 uglify = require("gulp-uglify"),
 zip = require("gulp-zip"),
-pathX = /.*\/(.*).js/;
+pathX = /.*\/(.*).js/,
+hasPrimrose = fs.existsSync("../Primrose"),
+primroseInfo = hasPrimrose && require("../Primrose/package.json");
 
 function X(name, cmd, deps){
   gulp.task(name, deps || [], function(cb){
@@ -22,38 +23,45 @@ function X(name, cmd, deps){
   });
 }
 
-X("build:primrose", "cd ../Primrose && gulp release");
+if(hasPrimrose){
+  X("build:primrose", "cd ../Primrose && gulp release");
 
-function doCopy () {
-  return gulp.src(primroseInfo.files.map(function (f) {
-    f = "../Primrose/" + f;
-    if (f[f.length - 1] === "/") {
-      f += "**/*";
-    }
-    return f;
-  }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]), 
-  { base: "../Primrose" })
-  .pipe(gulp.dest("."));
+  function doCopy () {
+    return gulp.src(primroseInfo.files.map(function (f) {
+      f = "../Primrose/" + f;
+      if (f[f.length - 1] === "/") {
+        f += "**/*";
+      }
+      return f;
+    }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]), 
+    { base: "../Primrose" })
+    .pipe(gulp.dest("."));
+  }
+
+  gulp.task("copy:primrose", ["build:primrose"], doCopy);
+  gulp.task("just:copy:primrose", doCopy);
+
+  X("build:primrose-debug", "cd ../Primrose && gulp debug", ["copy:primrose"]);
 }
 
-gulp.task("copy:primrose", ["build:primrose"], doCopy);
-
-gulp.task("just:copy:primrose", doCopy);
-
-X("build:primrose-debug", "cd ../Primrose && gulp debug", ["copy:primrose"]);
-
-gulp.task("cssmin", ["copy:primrose"], function () {
+function cssMin() {
   return gulp.src(["stylesheets/*.css", "!stylesheets/*.min.css"])
   .pipe(rename({ suffix: ".min" }))
   .pipe(cssmin())
   .pipe(gulp.dest("stylesheets"));
-});
+}
 
-gulp.task("zip:quickstart", ["cssmin"], function () {
+gulp.task("cssmin", hasPrimrose ? ["copy:primrose"] : [], cssMin);
+gulp.task("just:cssmin", cssMin);
+
+function zipQuickstart() {
   return gulp.src(["quickstart/**/*"])
   .pipe(zip("PrimroseQuickstart.zip"))
   .pipe(gulp.dest("."));
-});
+}
+
+gulp.task("zip:quickstart", ["cssmin"], zipQuickstart);
+gulp.task("just:zip:quickstart", zipQuickstart);
 
 function fileSize(file) {
   var size = fs.lstatSync(file).size,
@@ -82,7 +90,7 @@ function pugSite(pretty) {
     parts.pop();
 
     callback(null, {
-      version: primroseInfo.version,
+      version: primroseInfo.version || "N/A",
       filePath: name,
       cssExt: ".css",
       jsExt: ".js",
