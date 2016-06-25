@@ -74,5 +74,8 @@
     "three": "^0.76.1",
     "uws": "^0.4.1",
     "webvr-bootstrapper": "git+https://github.com/capnmidnight/WebVR-Bootstrapper.git"
+  },
+  "devDependencies": {
+    "gulp-stylus": "^2.5.0"
   }
 }

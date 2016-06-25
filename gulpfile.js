@@ -7,8 +7,10 @@ fs = require("fs"),
 pug = require("gulp-pug"),
 recurseDirectory = require("./server/recurseDirectory"),
 rename = require("gulp-rename"),
+stylus = require("gulp-stylus"),
 uglify = require("gulp-uglify"),
 zip = require("gulp-zip"),
+
 pathX = /.*\/(.*).js/,
 hasPrimrose = fs.existsSync("../Primrose"),
 primroseInfo = hasPrimrose && require("../Primrose/package.json");
@@ -44,6 +46,15 @@ if(hasPrimrose){
   X("build:primrose-debug", "cd ../Primrose && gulp debug", ["copy:primrose"]);
 }
 
+function doStylus(){
+  return gulp.src(["stylesheets/**/*.styl"])
+  .pipe(stylus())
+  .pipe(gulp.dest("stylesheets"));
+}
+
+gulp.task("stylus", hasPrimrose ? ["copy:primrose"] : [], doStylus);
+gulp.task("just:stylus", doStylus);
+
 function cssMin() {
   return gulp.src(["stylesheets/*.css", "!stylesheets/*.min.css"])
   .pipe(rename({ suffix: ".min" }))
@@ -51,7 +62,7 @@ function cssMin() {
   .pipe(gulp.dest("stylesheets"));
 }
 
-gulp.task("cssmin", hasPrimrose ? ["copy:primrose"] : [], cssMin);
+gulp.task("cssmin", ["stylus"], cssMin);
 gulp.task("just:cssmin", cssMin);
 
 function zipQuickstart() {
