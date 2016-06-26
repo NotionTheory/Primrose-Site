@@ -35,7 +35,7 @@ if(hasPrimrose){
         f += "**/*";
       }
       return f;
-    }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]), 
+    }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]),
     { base: "../Primrose" })
     .pipe(gulp.dest("."));
   }
@@ -47,9 +47,9 @@ if(hasPrimrose){
 }
 
 function doStylus(){
-  return gulp.src(["stylesheets/**/*.styl"])
+  return gulp.src(["!node_modules/**/*.styl", "**/*.styl"], { base: "./" })
   .pipe(stylus())
-  .pipe(gulp.dest("stylesheets"));
+  .pipe(gulp.dest("./"));
 }
 
 gulp.task("stylus", hasPrimrose ? ["copy:primrose"] : [], doStylus);
