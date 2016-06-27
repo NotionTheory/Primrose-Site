@@ -14,8 +14,8 @@ zip = require("gulp-zip"),
 pathX = /.*\/(.*).js/,
 hasPrimrose = fs.existsSync("../Primrose"),
 primroseInfo = hasPrimrose && require("../Primrose/package.json"),
-stylusFiles = [not("node_modules"), "**/*.styl"],
-pugFiles = [not("node_modules"), "*.jade"];
+stylusFiles = ["stylesheets/**/*.styl"],
+pugFiles = ["*.jade"];
 
 function X(name, cmd, deps){
   gulp.task(name, deps || [], function(cb){
@@ -36,6 +36,8 @@ function watchify(task, files, deps) {
     return gulp.watch(files, [task]);
   });
 }
+
+X("run:primrose", "npm run dev");
 
 if(hasPrimrose){
   X("build:primrose", "cd ../Primrose && gulp release");
@@ -168,4 +170,4 @@ gulp.task("debug", ["just:pug:site", "just:stylus"]);
 gulp.task("release", ["pug:site", "cssmin"]);
 gulp.task("watch", ["watch:just:pug:site", "watch:just:stylus"]);
 
-gulp.task("default", ["debug", "watch"]);
+gulp.task("default", ["debug", "watch", "run:primrose"]);
