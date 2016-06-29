@@ -31,7 +31,7 @@
   ],
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js --path=.. --url=Primrose/meeting/ --mode=dev",
+    "dev": "node server.js --path=.. --url=Primrose/doc/empty --mode=dev",
     "demo": "node server.js --path=. --url=test/ --mode=dev",
     "local": "node server.js --path=.. --url=Primrose/meeting/ --mode=localOnly",
     "deploy": "git push && git checkout master && git merge dev && git push && git checkout dev && cd ../Primrose && git push && git checkout master && git merge dev && git push && git checkout dev"
