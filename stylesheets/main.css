@@ -7,7 +7,6 @@ body {
   position: absolute;
   margin: 0;
   padding: 0;
-  width: 100%;
   height: 100%;
 }
 
@@ -19,30 +18,35 @@ input {
   background-color: #fff;
 }
 
-#logo {
-  margin-bottom: 5em;
-}
-
 #cta {
   display: block;
-  width: 100%;
 }
 
 button {
   padding: 0.75em 1.5em;
   margin-right: 3em;
+  margin-bottom:  1em;
+  margin-top: 1em;
   border: 0;
   background-color: #374346;
   color: #f1f1ef;
   text-transform: uppercase;
   font-size: 100%;
   box-shadow: -5px 5px 43px #343436;
+  width: 15em;
 }
 
 button::after {
   content: "\27F6";
   padding-left: 1em;
   font-size: 105%;
+}
+
+#intro > div {
+  display: inline-block;
+  vertical-align: top;
+  line-height: 1.5;
+  text-align: justify;
 }
 
 code {
@@ -98,7 +102,6 @@ main > hr {
 
 #loading {
   color: #fff;
-  width: 100%;
 }
 
 #progressBar {
@@ -112,12 +115,22 @@ ul {
   list-style: circle;
 }
 
+html,
+body,
 header,
 main,
 footer,
 #documentation iframe,
-#footerWrapper {
+#footerWrapper,
+#loading,
+#cta,
+#frontBuffer {
   width: 100%;
+}
+
+#frontBuffer {
+  border: none;
+  margin-top: 3em;
 }
 
 header,
@@ -138,7 +151,6 @@ main,
 }
 
 header {
-  height: 32em;
   background-color: #ec2471;
   background-image: radial-gradient(circle farthest-corner at 50% 50%, #ec2471 0%, #87518f);
   border-bottom: solid 1px #ccc;
@@ -179,11 +191,13 @@ header h1 {
 
 main h1 {
   font-style: italic;
+  font-weight:  100;
 }
 
 nav > ul {
   list-style: none;
   margin: 0;
+  padding: 0;
 }
 
 main a[target="_blank"]::after {
@@ -377,24 +391,48 @@ td:nth-child(2) {
 
 .icon {
   display: inline-block;
-  float: right;
   background-image: url("images/icons.png");
   background-size: 100%;
+  margin-bottom: 0.5em;
+  vertical-align: middle;
+}
+
+footer .icon {
+  float: right;
+}
+
+.small.icon {
   width: 32px;
   height: 32px;
-/* margin-left: 1em; */
-  margin-bottom: 0.5em;
+}
+
+.large.icon {
+  width: 50px;
+  height: 50px;
+  margin-right: 0.5em;
 }
 
 .github {
-  background-position-y: 62%;
-}
-
-.twitter {
   background-position-y: 50%;
 }
 
+.twitter {
+  background-position-y: 40%;
+}
+
+.geom1 {
+  background-position-y: 90%;
+}
+
+.geom2 {
+  background-position-y: 100%;
+}
+
 @media (min-width: 641px) {
+  header {
+    height: 32em;
+  }
+
   details {
     margin-left: -1em;
   }
@@ -415,6 +453,18 @@ td:nth-child(2) {
     padding: 0.25em 1em;
   }
 
+  #logo {
+    margin-bottom: 5em;
+  }
+
+  #intro > div {
+    width: 45%;
+    margin-right: 4.5%;
+  }
+
+  #frontBuffer {
+    height: 40vw;
+  }
 }
 
 @media (max-width: 640px) {
@@ -454,5 +504,16 @@ td:nth-child(2) {
     max-width: 346px;
   }
 
+  #logo {
+    margin-bottom: 1em;
+  }
+
+  header button {
+    margin: ;
+  }
+
+  #frontBuffer {
+    height: 60vw;
+  }
 }
 
