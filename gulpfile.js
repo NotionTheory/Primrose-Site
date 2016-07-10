@@ -57,5 +57,3 @@ function zipQuickstart() {
 gulp.task("zip:quickstart", quickstartDependencies, zipQuickstart);
 gulp.task("just:zip:quickstart", zipQuickstart);
 gulp.task("release", ["zip:quickstart"]);
-
-X("default", "npm run dev");
