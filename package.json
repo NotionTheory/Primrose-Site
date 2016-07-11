@@ -10,9 +10,9 @@
   "homepage": "http://www.primrosevr.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/capnmidnight/Primrose.git"
+    "url": "https://github.com/capnmidnight/Primrose-Site.git"
   },
-  "bugs": "https://github.com/capnmidnight/Primrose/issues",
+  "bugs": "https://github.com/capnmidnight/Primrose-Site/issues",
   "files": [
     "LICENSE.md",
     "README.md",
@@ -68,7 +68,7 @@
     "logger": "git+https://github.com/capnmidnight/logger.git",
     "mime": "^1.3.4",
     "pliny": "^3.2.0",
-    "primrose": "git+https://github.com/capnmidnight/Primrose.git",
+    "primrose": "git+https://github.com/NotionTheory/Primrose.git",
     "pug": "^2.0.0-alpha6",
     "socket.io": "^1.4.4",
     "socket.io-client": "^1.4.4",
