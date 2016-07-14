@@ -34,7 +34,7 @@
     "dev": "node server.js --path=.. --url=Primrose/meeting/ --mode=dev",
     "demo": "node server.js --path=. --url=test/ --mode=dev",
     "local": "node server.js --path=.. --url=Primrose/meeting/ --mode=localOnly",
-    "deploy": "git push && git checkout master && git merge dev && git push && git checkout dev && cd ../Primrose && git push && git checkout master && git merge dev && git push && git checkout dev"
+    "deploy": "git push && git checkout master && git merge dev && git push && git checkout dev && cd ../Primrose && git push && git checkout master && git merge dev && git push && npm publish && git checkout dev"
   },
   "keywords": [
     "virtual reality",
@@ -65,7 +65,7 @@
     "gulp-zip": "^3.2.0",
     "jshint": "^2.9.2",
     "leapjs": "^0.6.4",
-    "logger": "git+https://github.com/capnmidnight/logger.git",
+    "bare-bones-logger": "^1.0.2",
     "mime": "^1.3.4",
     "pliny": "^3.2.0",
     "primrose": "git+https://github.com/NotionTheory/Primrose.git",
@@ -74,6 +74,6 @@
     "socket.io-client": "^1.4.4",
     "three": "^0.76.1",
     "uws": "^0.4.1",
-    "webvr-bootstrapper": "git+https://github.com/capnmidnight/WebVR-Bootstrapper.git"
+    "webvr-bootstrapper": "^1.0.0"
   }
 }
