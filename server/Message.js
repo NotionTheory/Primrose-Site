@@ -6,6 +6,7 @@ const options = require("./options").parse(process.argv),
   fs = require("fs"),
   http = require("http"),
   mime = require("mime"),
+  path = require("path"),
   stream = require("stream"),
   headerTranslation = {
     length: "content-length",
@@ -139,6 +140,28 @@ class Message {
   // this needs to be a method so it can be used to send new cookies.
   static noContent(){
     return new Message(204);
+  }
+
+  static directory(dirPath, root){
+    var link = function(a, b){
+      return "<li><a href=\"" + a + "\">" + b + "</a></li>"
+    }
+
+    var files = fs.readdirSync(dirPath),
+      links = [],
+      parent = path.dirname(dirPath);
+    if(parent !== "."){
+      links.push(link("..", ".."));
+    }
+    for(var i = 0; i < files.length; ++i){
+      var file = files[i];
+      var subPath = path.join(dirPath, file);
+      var stats = fs.lstatSync(subPath);
+      if(!/^[$.]/.test(file) && (stats.isDirectory() || /\.html$/.test(file))){
+        links.push(link(file, file));
+      }
+    }
+    return Message.html("<ul>" + links.join("\n") + "</ul>");
   }
 
   static file(fileName, state) {

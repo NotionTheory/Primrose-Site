@@ -4,7 +4,10 @@ const url = require("url"),
   core = require("./core"),
   onError = core.err,
   routes = require("./controllers").filter((r) => !!r.URLPattern),
-  Message = require("./Message");
+  Message = require("./Message"),
+  options = require("./options").parse(process.argv),
+  fs = require("fs"),
+  isDev = options.mode === "dev" || process.env.NODE_ENV === "dev";
 
 let root = ".";
 
@@ -16,6 +19,9 @@ routes.push({
       var parts = url.parse(state.url),
         file = root + parts.pathname;
       if (file[file.length - 1] === "/") {
+        if(!fs.existsSync(file + "index.html") && isDev){
+          return Message.directory(file, root);
+        }
         file += "index.html";
       }
       return Message.file(file, state);
