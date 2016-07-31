@@ -2,7 +2,6 @@
 
 const options = require("./options").parse(process.argv),
   isDev = options.mode === "dev" || process.env.NODE_ENV === "dev",
-  core = require("./core.js"),
   fs = require("fs"),
   http = require("http"),
   mime = require("mime"),

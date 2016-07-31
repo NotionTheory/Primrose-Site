@@ -1,9 +1,6 @@
 "use strict";
 
-const core = require("./core"),
-  log = core.log,
-  err = core.err,
-  User = require("./data/User"),
+const User = require("./data/User"),
   userDB = require("./data/users"),
   activeUsers = {},
   options = require("./options").parse(process.argv),
@@ -46,7 +43,7 @@ function peer(evt) {
 }
 
 module.exports = function (socket) {
-  log("New connection!");
+  console.log("New connection!");
   var key = null,
     identity = null;
 
@@ -73,7 +70,9 @@ module.exports = function (socket) {
       }
     }).catch((exp) => {
       socket.emit(verb + "Failed", exp.message);
-      socket.emit("errorDetail", err(exp.message || exp));
+      var msg = exp.message || exp;
+      console.error(msg);
+      socket.emit("errorDetail", msg);
     });
   }
 
@@ -84,7 +83,7 @@ module.exports = function (socket) {
         && identity.userName
         && identity.userName.toLocaleUpperCase().trim();
       if (key) {
-        log("Trying to $1 $2", verb, key);
+        console.log("Trying to $1 $2", verb, key);
         userDB.search(key).then((users) => {
           if (verb === "login" && users.length > 0 || verb === "signup" && users.length === 0) {
             var user = users[0] || {
@@ -109,7 +108,9 @@ module.exports = function (socket) {
       else {
         socket.emit(verb + "Failed", "no user name was received at the server.");
         if (isDev) {
-          socket.emit("errorDetail", err("have identity: $1, userName: $2, key: $3", !!identity, identity && identity.userName, key));
+          var msg = "have identity: ${!!identity}, userName: ${identity && identity.userName}, key: ${key}";
+          console.error(msg);
+          socket.emit("errorDetail", msg);
         }
       }
     };

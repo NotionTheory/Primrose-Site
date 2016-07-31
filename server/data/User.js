@@ -1,7 +1,5 @@
 "use strict";
 
-const log = require("../core").log;
-
 class User {
   constructor(info) {
 
@@ -40,7 +38,7 @@ class User {
       ++index;
     }
 
-    log("Device added for $1", this.userName);
+    console.log("Device added for " + this.userName);
     this.devices[index] = socket;
 
     //
@@ -174,16 +172,16 @@ class User {
 
     for(let key in handlers){
       if(handlers[key]){
-        socket.removeListener(key, handlers[key]);        
+        socket.removeListener(key, handlers[key]);
       }
     }
 
     if (this.isConnected) {
-      log("Device #$1 lost for $2.", index, this.userName);
+      console.log(`Device #${index} lost for ${this.userName}.`);
       this.emit(index, "deviceLost", index);
     }
     else {
-      log("disconnect = $1.", this.userName);
+      console.log(`disconnect = ${this.userName}.`);
       this.leave();
       this.devices.splice(0);
     }

@@ -1,8 +1,6 @@
 "use strict";
 
 const url = require("url"),
-  core = require("./core"),
-  onError = core.err,
   routes = require("./controllers").filter((r) => !!r.URLPattern),
   Message = require("./Message"),
   options = require("./options").parse(process.argv),
@@ -142,7 +140,7 @@ module.exports = function (serveRoot) {
       })
       .then((state) => findController(request)(state))
       .catch((err) => {
-        onError(err);
+        console.error(err);
         return (err instanceof Message) ? err : Message.InternalServerError;
       })
       .then((msg) => msg.send(response));
