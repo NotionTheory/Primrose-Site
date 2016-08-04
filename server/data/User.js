@@ -53,6 +53,7 @@ class User {
       logout: this.disconnect.bind(this, index),
       disconnect: this.disconnect.bind(this, index),
       peer: this.peer.bind(this),
+      listUsers: this.listUsers.bind(this, index),
       offer: null,
       answer: null,
       ice: null
@@ -65,6 +66,7 @@ class User {
     socket.on("logout", handlers.logout);
     socket.on("disconnect", handlers.disconnect);
     socket.on("peer", handlers.peer);
+    socket.on("listUsers", handlers.listUsers);
 
     if (this.app !== null && this.app !== app) {
       this.leave();
@@ -75,17 +77,7 @@ class User {
     //
     this.app = app;
 
-    //
-    // notify the new client of all of the users currently logged in
-    //
-    var userList = [];
-    for (var key in users) {
-      var user = users[key];
-      if (user.isConnected && user.userName !== this.userName && user.app === this.app) {
-        userList.push(user.getPackage());
-      }
-    }
-    socket.emit("userList", userList);
+    socket.emit("loginComplete");
 
     if (index === 0) {
       //
@@ -162,6 +154,19 @@ class User {
       userName: this.userName,
       text: text
     });
+  }
+
+
+  listUsers(index) {
+    const socket = this.devices[index];
+    var userList = [];
+    for (var key in users) {
+      var user = users[key];
+      if (user.isConnected && user.userName !== this.userName && user.app === this.app) {
+        userList.push(user.getPackage());
+      }
+    }
+    socket.emit("userList", userList);
   }
 
   disconnect(index) {
