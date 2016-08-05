@@ -42,6 +42,26 @@ function peer(evt) {
   }
 }
 
+function listUsers(evt){
+  var fromUser = activeUsers[evt.fromUserName];
+  if(fromUser){
+    var fromIndex = evt.fromUserIndex || 0,
+      fromSocket = fromUser.devices[fromIndex];
+    if(fromSocket){
+      var userList = [];
+      for (var key in activeUsers) {
+        var user = activeUsers[key];
+        if (user.isConnected &&
+          user.app === fromUser.app &&
+          (user.userName !== fromUser.userName || fromIndex > 0)) {
+          userList.push(user.getPackage());
+        }
+      }
+      fromSocket.emit("userList", userList);
+    }
+  }
+}
+
 module.exports = function (socket) {
   console.log("New connection!");
   var key = null,
@@ -55,6 +75,7 @@ module.exports = function (socket) {
           activeUsers[key] = new User(user);
           activeUsers[key].addEventListener("broadcast", broadcast);
           activeUsers[key].addEventListener("peer", peer);
+          activeUsers[key].addEventListener("listUsers", listUsers);
         }
 
         activeUsers[key].addDevice(socket, identity.app, activeUsers);
@@ -83,7 +104,7 @@ module.exports = function (socket) {
         && identity.userName
         && identity.userName.toLocaleUpperCase().trim();
       if (key) {
-        console.log("Trying to $1 $2", verb, key);
+        console.log("Trying to %s %s", verb, key);
         userDB.search(key).then((users) => {
           if (verb === "login" && users.length > 0 || verb === "signup" && users.length === 0) {
             var user = users[0] || {

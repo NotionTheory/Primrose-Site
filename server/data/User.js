@@ -9,7 +9,8 @@ class User {
 
     this.listeners = {
       broadcast: [],
-      peer: []
+      peer: [],
+      listUsers: []
     };
 
     this.state = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
@@ -23,10 +24,20 @@ class User {
     }
   }
 
-  peer(evt) {
-    for (var i = 0; i < this.listeners.peer.length; ++i){
-      this.listeners.peer[i](evt);
+  fire(evt, args) {
+    var list = this.listeners[evt];
+    if(list){
+      for (var i = 0; i < list.length; ++i){
+        var thunk = list[i];
+        if(thunk){
+          thunk(args);
+        }
+      }
     }
+  }
+
+  peer(evt) {
+    this.fire("peer", evt);
   }
 
   addDevice(socket, app, users) {
@@ -123,10 +134,7 @@ class User {
         args: args
       };
 
-    for (var i = 0; i < this.listeners.broadcast.length; ++i) {
-      var thunk = this.listeners.broadcast[i];
-      thunk(evt);
-    }
+    this.fire("broadcast", evt);
   }
 
   emit(skipIndex) {
@@ -156,17 +164,11 @@ class User {
     });
   }
 
-
   listUsers(index) {
-    const socket = this.devices[index];
-    var userList = [];
-    for (var key in users) {
-      var user = users[key];
-      if (user.isConnected && user.userName !== this.userName && user.app === this.app) {
-        userList.push(user.getPackage());
-      }
-    }
-    socket.emit("userList", userList);
+    this.fire("listUsers", {
+      fromUserName: this.userName,
+      fromIndex: index
+    });
   }
 
   disconnect(index) {
