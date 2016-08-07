@@ -1,8 +1,16 @@
 "use strict";
 
 class User {
-  constructor(info) {
+  static makeID(identity){
+    return identity
+      && identity.userName
+      && identity.appKey
+      && (identity.appKey.toLocaleUpperCase().trim()
+        + ":"
+        + identity.userName.toLocaleUpperCase().trim());
+  }
 
+  constructor(info) {
     this.devices = [];
 
     this.handlers = [];
@@ -16,6 +24,10 @@ class User {
     this.state = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
     this.userName = info.userName;
     this.appKey = null;
+  }
+
+  get id() {
+    return User.makeID(this);
   }
 
   addEventListener(evt, thunk) {
@@ -37,11 +49,20 @@ class User {
   }
 
   peer(evt) {
+    evt.appKey = this.appKey;
     this.fire("peer", evt);
   }
 
   addDevice(socket, appKey) {
-    console.log("addDevice", appKey);
+    if (this.appKey !== null && this.appKey !== appKey) {
+      this.leave();
+    }
+
+    //
+    // register what app the user is logged into
+    //
+    this.appKey = appKey;
+
     //
     // find a slot in which to put the socket
     //
@@ -50,22 +71,20 @@ class User {
       ++index;
     }
 
-    console.log("Device added for " + this.userName);
+    console.log("Device added for " + this.userName + " at index " + index);
     this.devices[index] = socket;
 
     //
     // bind the events
     //
     var handlers = {
-      userState: function (state) {
-        this.state = state;
-        this.broadcast(index, "userState", this.getPackage());
-      }.bind(this),
       chat: this.chat.bind(this),
+      peer: this.peer.bind(this),
+      userState: this.sync.bind(this, index),
       logout: this.disconnect.bind(this, index),
       disconnect: this.disconnect.bind(this, index),
-      peer: this.peer.bind(this),
       listUsers: this.listUsers.bind(this, index),
+      getDeviceIndex: socket.emit.bind(socket, "deviceIndex", index),
       offer: null,
       answer: null,
       ice: null
@@ -79,15 +98,7 @@ class User {
     socket.on("disconnect", handlers.disconnect);
     socket.on("peer", handlers.peer);
     socket.on("listUsers", handlers.listUsers);
-
-    if (this.appKey !== null && this.appKey !== appKey) {
-      this.leave();
-    }
-
-    //
-    // register what app the user is logged into
-    //
-    this.appKey = appKey;
+    socket.on("getDeviceIndex", handlers.getDeviceIndex);
 
     socket.emit("loginComplete");
 
@@ -116,10 +127,11 @@ class User {
       //
       socket.emit("userState", this.getPackage());
     }
-    //
-    // notify the device of its own socket index.
-    //
-    socket.emit("deviceIndex", index);
+  }
+
+  sync(index, state) {
+    this.state = state;
+    this.broadcast(index, "userState", this.getPackage());
   }
 
   getPackage() {
@@ -129,8 +141,7 @@ class User {
   broadcast(skipIndex) {
     var args = Array.prototype.slice.call(arguments, 1),
       evt = {
-        appKey: this.appKey,
-        userName: this.userName,
+        user: this,
         skipSocketIndex: skipIndex,
         args: args
       };
@@ -167,8 +178,8 @@ class User {
 
   listUsers(index) {
     this.fire("listUsers", {
-      fromUserName: this.userName,
-      fromIndex: index
+      user: this,
+      index: index
     });
   }
 
