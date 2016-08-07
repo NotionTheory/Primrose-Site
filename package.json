@@ -31,6 +31,7 @@
   ],
   "scripts": {
     "start": "node server.js",
+    "redev": "node server.js --mode=dev --path=..",
     "dev"  : "node server.js --mode=dev --path=.. --url=Primrose/meeting/",
     "demo" : "node server.js --mode=dev --path=. --url=test/",
     "local": "node server.js --mode=localOnly --path=.. --url=Primrose/meeting/",

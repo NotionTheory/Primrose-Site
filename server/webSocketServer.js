@@ -6,10 +6,19 @@ const User = require("./data/User"),
   options = require("./options").parse(process.argv),
   isDev = options.mode === "dev" || process.env.NODE_ENV === "dev";
 
+function makeIdentKey(identity){
+  return identity
+    && identity.userName
+    && identity.appKey
+    && (identity.appKey.toLocaleUpperCase().trim()
+      + ":"
+      + identity.userName.toLocaleUpperCase().trim());
+}
+
 function broadcast(evt) {
   for (var key in activeUsers) {
     var toUser = activeUsers[key];
-    if (toUser.app === evt.app) {
+    if (toUser.appKey === evt.appKey) {
       toUser.emit
         .bind(toUser, (toUser.userName === evt.userName) ? evt.skipSocketIndex : -1)
         .apply(toUser, evt.args);
@@ -21,7 +30,7 @@ function peer(evt) {
   var fromUser = activeUsers[evt.fromUserName],
     toUser = activeUsers[evt.toUserName];
 
-  if (fromUser && toUser && fromUser.app === toUser.app) {
+  if (fromUser && toUser && fromUser.appKey === toUser.appKey) {
     var fromIndex = evt.fromUserIndex || 0,
       toIndex = evt.toUserIndex || 0,
       fromSocket = fromUser.devices[fromIndex],
@@ -52,7 +61,7 @@ function listUsers(evt){
       for (var key in activeUsers) {
         var user = activeUsers[key];
         if (user.isConnected &&
-          user.app === fromUser.app &&
+          user.appKey === fromUser.appKey &&
           (user.userName !== fromUser.userName || fromIndex > 0)) {
           userList.push(user.getPackage());
         }
@@ -62,81 +71,100 @@ function listUsers(evt){
   }
 }
 
-module.exports = function (socket) {
-  console.log("New connection!");
-  var key = null,
-    identity = null;
+function setUser(socket, identity, key, user){
+  if (!activeUsers[key]) {
+    if(user) {
+      user.appKey = identity.appKey;
+    }
+    activeUsers[key] = new User(user || identity);
+    activeUsers[key].addEventListener("broadcast", broadcast);
+    activeUsers[key].addEventListener("peer", peer);
+    activeUsers[key].addEventListener("listUsers", listUsers);
+  }
 
-  function receiveHash(verb, user, hash) {
-    Promise.resolve().then(() => {
-      if (user.userName === key && (verb === "login" && user.hash === hash || verb === "signup" && user.hash === null && hash)) {
-        if (!activeUsers[key]) {
-          user.app = identity.app;
-          activeUsers[key] = new User(user);
-          activeUsers[key].addEventListener("broadcast", broadcast);
-          activeUsers[key].addEventListener("peer", peer);
-          activeUsers[key].addEventListener("listUsers", listUsers);
-        }
+  activeUsers[key].addDevice(socket, identity.appKey);
+}
 
-        activeUsers[key].addDevice(socket, identity.app, activeUsers);
-        user.hash = hash;
-        user.lastLogin = new Date();
-        return userDB.set(user);
+function receiveHash(socket, verb, identity, key, user, hash) {
+  Promise.resolve().then(() => {
+    if (user.userName === key && (verb === "login" && user.hash === hash || verb === "signup" && user.hash === null && hash)) {
+      setUser(socket, identity, key, user);
+      user.hash = hash;
+      user.lastLogin = new Date();
+      return userDB.set(user);
+    }
+    else if(verb === "login") {
+      throw new Error("user name and password do not match.");
+    }
+    else {
+      throw new Error("no password was received at the server.");
+    }
+  }).catch((exp) => {
+    socket.emit(verb + "Failed", exp.message);
+    var msg = exp.message || exp;
+    console.error(msg);
+    socket.emit("errorDetail", msg);
+  });
+}
+
+function setup(socket, verb, thunk){
+  return (identity) => {
+    const key = makeIdentKey(identity);
+    if(key){
+      identity.appKey = identity.appKey.toLocaleUpperCase();
+      identity.userName = identity.userName.toLocaleUpperCase();
+      console.log("Trying to %s %s", verb, key);
+      thunk(identity, key);
+    }
+    else {
+      socket.emit(verb + "Failed", "no user name/appKey was received at the server.");
+      if (isDev) {
+        var msg = "have identity: " + !!identity +
+          ", userName: " + (identity && identity.userName) +
+          ", appKey: " + (identity && identity.appKey) +
+          ", key: " + key;
+        console.error(msg);
+        socket.emit("errorDetail", msg);
+      }
+    }
+  }
+}
+
+function userAuth(socket, verb) {
+  return setup(socket, verb, (identity, key) => {
+    userDB.search(identity.userName).then((users) => {
+      if (verb === "login" && users.length > 0 || verb === "signup" && users.length === 0) {
+        var user = users[0] || {
+          userName: identity.userName,
+          salt: userDB.newSalt(),
+          hash: null,
+          email: identity.email,
+          lastLogin: null,
+          appKey: null
+        };
+        socket.once("hash", receiveHash.bind(null, socket, verb, identity, key, user));
+        socket.emit("salt", user.salt);
       }
       else if(verb === "login") {
-        throw new Error("user name and password do not match.");
+        socket.emit("loginFailed", "the user '[USER]' does not exist.");
       }
       else {
-        throw new Error("no password was received at the server.");
+        socket.emit("signupFailed", "the user name '[USER]' already exists.");
       }
-    }).catch((exp) => {
-      socket.emit(verb + "Failed", exp.message);
-      var msg = exp.message || exp;
-      console.error(msg);
-      socket.emit("errorDetail", msg);
     });
-  }
+  });
+}
 
-  function userAuth(verb) {
-    return (ident) => {
-      identity = ident;
-      key = identity
-        && identity.userName
-        && identity.userName.toLocaleUpperCase().trim();
-      if (key) {
-        console.log("Trying to %s %s", verb, key);
-        userDB.search(key).then((users) => {
-          if (verb === "login" && users.length > 0 || verb === "signup" && users.length === 0) {
-            var user = users[0] || {
-              userName: key,
-              salt: userDB.newSalt(),
-              hash: null,
-              email: identity.email,
-              lastLogin: null,
-              app: null
-            };
-            socket.once("hash", receiveHash.bind(null, verb, user));
-            socket.emit("salt", user.salt);
-          }
-          else if(verb === "login") {
-            socket.emit("loginFailed", "the user '[USER]' does not exist.");
-          }
-          else {
-            socket.emit("signupFailed", "the user name '[USER]' already exists.");
-          }
-        });
-      }
-      else {
-        socket.emit(verb + "Failed", "no user name was received at the server.");
-        if (isDev) {
-          var msg = "have identity: ${!!identity}, userName: ${identity && identity.userName}, key: ${key}";
-          console.error(msg);
-          socket.emit("errorDetail", msg);
-        }
-      }
-    };
-  }
+function guestLogin(socket) {
+  return setup(socket, "login", (identity, key) => {
+    setUser(socket, identity, key);
+  });
+}
 
-  socket.on("login", userAuth("login"));
-  socket.on("signup", userAuth("signup"));
+module.exports = function (socket) {
+  console.log("New connection!");
+
+  socket.on("login", userAuth(socket, "login"));
+  socket.on("signup", userAuth(socket, "signup"));
+  socket.on("guest", guestLogin(socket));
 };

@@ -15,7 +15,7 @@ class User {
 
     this.state = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
     this.userName = info.userName;
-    this.app = null;
+    this.appKey = null;
   }
 
   addEventListener(evt, thunk) {
@@ -40,7 +40,8 @@ class User {
     this.fire("peer", evt);
   }
 
-  addDevice(socket, app, users) {
+  addDevice(socket, appKey) {
+    console.log("addDevice", appKey);
     //
     // find a slot in which to put the socket
     //
@@ -79,14 +80,14 @@ class User {
     socket.on("peer", handlers.peer);
     socket.on("listUsers", handlers.listUsers);
 
-    if (this.app !== null && this.app !== app) {
+    if (this.appKey !== null && this.appKey !== appKey) {
       this.leave();
     }
 
     //
     // register what app the user is logged into
     //
-    this.app = app;
+    this.appKey = appKey;
 
     socket.emit("loginComplete");
 
@@ -128,7 +129,7 @@ class User {
   broadcast(skipIndex) {
     var args = Array.prototype.slice.call(arguments, 1),
       evt = {
-        app: this.app,
+        appKey: this.appKey,
         userName: this.userName,
         skipSocketIndex: skipIndex,
         args: args
