@@ -1,5 +1,8 @@
 ﻿"use strict";
-const http = require("http"),
+const requestors = {
+    "http:": require("http"),
+    "https:": require("https")
+  },
   URL = require("url");
 
 module.exports = (method, type, url, options) => {
@@ -9,10 +12,20 @@ module.exports = (method, type, url, options) => {
     options.headers.Accept = options.headers.Accept || type;
 
     if (options.data) {
-      // We could do other data types, but in my case, I'm probably only ever
-      // going to want JSON. No sense in overcomplicating the interface for
-      // features I'm not going to use.
-      options.headers["Content-Type"] = "application/json;charset=UTF-8";
+      if(!options.headers["Content-Type"]){
+        options.headers["Content-Type"] = "application/json;charset=UTF-8";
+      }
+      else {
+        options.headers["Content-Type"] = "text/plain;charset-UTF-8";
+        if(typeof options.data !== "string" && !(options.data instanceof String)) {
+          var output = Object.keys(options.data)
+            .map((key) => key + "=" + options.data[key])
+            .join("\n");
+          console.log("Request body:");
+          console.log(output);
+          options.data = output;
+        }
+      }
     }
 
     var reqOptions = URL.parse(url);
@@ -20,7 +33,8 @@ module.exports = (method, type, url, options) => {
     for (var key in options.headers) {
       reqOptions.headers[key] = options.headers[key];
     }
-    var req = http.request(reqOptions);
+    const req = requestors[reqOptions.protocol]
+      .request(reqOptions);
 
     req.on("response", function (res) {
       res.setEncoding("utf8");
@@ -29,7 +43,8 @@ module.exports = (method, type, url, options) => {
         output += chunk;
       });
       res.on("end", function () {
-        resolve(output);
+        res.body = output;
+        resolve(res);
       });
     });
 
