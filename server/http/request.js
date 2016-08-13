@@ -44,6 +44,9 @@ module.exports = (method, type, url, options) => {
       });
       res.on("end", function () {
         res.body = output;
+        if(type === "text/json"){
+          res.body = JSON.parse(res.body);
+        }
         resolve(res);
       });
     });
