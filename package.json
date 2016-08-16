@@ -76,6 +76,6 @@
     "socket.io-client": "^1.4.4",
     "three": "^0.76.1",
     "uws": "^0.4.1",
-    "webvr-bootstrapper": "^1.0.0"
+    "webvr-bootstrapper": "^3.0.0"
   }
 }
