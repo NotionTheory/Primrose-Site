@@ -177,15 +177,21 @@ class Message {
           if (isDev) {
             checkDate = 0;
           }
+
           var modDate = new Date(stat.mtime),
             delta = modDate.getTime() - checkDate;
 
-          if (delta >= 1000) {
-            resolve(new Message(200, fs.createReadStream(fileName), {
-              "last-modified": modDate.toGMTString(),
+          if (delta >= 1000 || isDev) {
+            var headers = {
               mime: mime.lookup(fileName) || "application/octet-stream",
               length: stat.size
-            }));
+            };
+
+            if(!isDev) {
+              headers["last-modified"] = modDate.toGMTString();
+            }
+
+            resolve(new Message(200, fs.createReadStream(fileName), headers));
           }
           else {
             resolve(Message.NotModified);
