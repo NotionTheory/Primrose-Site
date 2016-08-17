@@ -10,18 +10,23 @@ function req(thunk, path, params = {}){
   params.ident = "seanmcbeth";
   params.secret = process.env.XIRSYS_SECRET || require("../data/secrets.json").xirsysSecret;
 
-  let sep = "?";
-  for(var key in params){
-    path += sep + key + "=" + params[key];
-    sep = "&";
-  }
-
-  return thunk(root + path, {
-    headers: {
-      Accept: "*/*"
+  if(params.secret) {
+    let sep = "?";
+    for(var key in params){
+      path += sep + key + "=" + params[key];
+      sep = "&";
     }
-  })
-    .then((res) => res.body);
+
+    return thunk(root + path, {
+      headers: {
+        Accept: "*/*"
+      }
+    })
+      .then((res) => res.body);
+  }
+  else {
+    return Promise.resolve(null);
+  }
 }
 
 module.exports = {
@@ -39,7 +44,7 @@ module.exports = {
     application,
     room,
     secure
-  }).then((obj) => obj.d),
+  }).then((obj) => obj && obj.d),
   domain: {
     get: () => req(get, "domain"),
     post: (domain) => req(post, "domain", { domain }),
