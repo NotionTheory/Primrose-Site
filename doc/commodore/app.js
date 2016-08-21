@@ -8,12 +8,10 @@ var modA = isOSX ? "metaKey" : "ctrlKey",
   terminal = null,
 
   // setup the VR environment
-  env = new Primrose.BrowserEnvironment("Commodore", {
+  env = new Primrose.BrowserEnvironment({
     sceneModel: "../models/commodore_pet.json",
     skyTexture: "../images/bg2.jpg",
     groundTexture: "../images/deck.png",
-    fullScreenIcon: "../models/monitor.obj",
-    VRIcon: "../models/cardboard.obj",
     font: "../fonts/helvetiker_regular.typeface.js"
   });
 
@@ -36,10 +34,12 @@ env.addEventListener("ready", function () {
   ["CaseBottom", "CaseInset", "CaseTitle", "CaseTop",
     "Feet", "Keyboard", "KeyboardBezel",
     "MonitorCase", "MonitorInset", "Screen",
-    "TapeDeck", "TapeDeckControls", "TapeDeckDoor", "TapeDeckInset"]
-    .map(function (name) {
+    "TapeDeck", "TapeDeckControls", "TapeDeckDoor", "TapeDeckInset"
+  ]
+  .map(function (name) {
       return env.scene[name];
-    }).forEach(function (obj) {
+    })
+    .forEach(function (obj) {
       obj.position.y += env.avatarHeight * 0.9;
       obj.position.z -= 3;
     });
@@ -61,7 +61,7 @@ env.addEventListener("ready", function () {
   editor.padding = 10;
 
   terminal = new Primrose.Text.Terminal(editor);
-  terminal.loadFile("commodore/oregon.bas");
+  terminal.loadFile("oregon.bas");
 
   var editorMesh = textured(env.scene.Screen, editor);
   env.registerPickableObject(editorMesh);

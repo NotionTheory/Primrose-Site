@@ -7,11 +7,9 @@ var WIDTH = 100,
   t = 0,
   jabs = {},
   R = Primrose.Random,
-  env = new Primrose.BrowserEnvironment("Jabber Yabs", {
+  env = new Primrose.BrowserEnvironment({
     skyTexture: "../images/bg2.jpg",
     groundTexture: "../images/grass.png",
-    fullScreenIcon: "../models/monitor.obj",
-    VRIcon: "../models/cardboard.obj",
     font: "../fonts/helvetiker_regular.typeface.js"
   });
 
@@ -36,7 +34,7 @@ function eye(side, body) {
 }
 
 function Jabber(w, h, s) {
-  var skin = R.item(Primrose.SKIN_VALUES),
+  var skin = R.item(Primrose.SKINS_VALUES),
     body = textured(sphere(0.2, 14, 7), skin),
     velocity = v3(
       R.number(-s, s),
@@ -51,11 +49,12 @@ function Jabber(w, h, s) {
 
   eye(-1, body);
   eye(1, body);
-  
+
   body.rotation.y = Math.PI;
   body.update = function (dt) {
     velocity.y -= env.options.gravity * dt;
-    body.position.add(v.copy(velocity).multiplyScalar(dt));
+    body.position.add(v.copy(velocity)
+      .multiplyScalar(dt));
     if (velocity.x > 0 && body.position.x >= w ||
       velocity.x < 0 && body.position.x <= -w) {
       velocity.x *= -1;
@@ -68,10 +67,11 @@ function Jabber(w, h, s) {
       velocity.y = 0;
       body.position.y = 1;
     }
-    v.copy(body.position).sub(env.player.position);
+    v.copy(body.position)
+      .sub(env.input.head.position);
     var d = v.length();
     if (d < 3) {
-      body.lookAt(env.player.position);
+      body.lookAt(env.input.head.position);
       body.position.set(
         R.number(-0.01, 0.01),
         R.number(-0.01, 0.01),
@@ -81,10 +81,12 @@ function Jabber(w, h, s) {
       velocity.add(v.multiplyScalar((3 - d) / 100));
     }
     else {
-      body.lookAt(v.copy(velocity).add(body.position));
+      body.lookAt(v.copy(velocity)
+        .add(body.position));
     }
   };
   body.jump = function (normal) {
+    console.log(normal);
     v.fromArray(normal);
     v.y = env.options.gravity / 2;
     velocity.add(v);
@@ -92,7 +94,7 @@ function Jabber(w, h, s) {
   return body;
 }
 
-// Once Primrose has setup the WebGL context, setup Three.js, 
+// Once Primrose has setup the WebGL context, setup Three.js,
 // downloaded and validated all of model files, and constructed
 // the basic scene hierarchy out of it, the "ready" event is fired,
 // indicating that we may make additional changes to the scene now.

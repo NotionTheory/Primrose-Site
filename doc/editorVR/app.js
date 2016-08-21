@@ -4,12 +4,10 @@ var GRASS = "../images/grass.png",
   WATER = "../images/water.png",
   DECK = "../images/deck.png",
 
-  env = new Primrose.BrowserEnvironment("Editor3D", {
+  env = new Primrose.BrowserEnvironment({
     skyTexture: "../images/bg2.jpg",
     ambientSound: "../audio/wind.ogg",
     groundTexture: GRASS,
-    fullScreenIcon: "../models/monitor.obj",
-    VRIcon: "../models/cardboard.obj",
     font: "../fonts/helvetiker_regular.typeface.js"
   }),
 
@@ -33,12 +31,9 @@ var GRASS = "../images/grass.png",
 
   scriptUpdateTimeout,
   lastScript = null,
-  scriptAnimate = null,
-
-  editorCenter = hub();
+  scriptAnimate = null;
 
 env.addEventListener("ready", function () {
-  env.appendChild(editorCenter);
   env.scene.add(subScene);
 
   stereoImage = env.createElement("img");
@@ -101,9 +96,9 @@ env.addEventListener("ready", function () {
   editorFrame.appendChild(editor);
   editorFrame.appendChild(button1);
 
-  editorFrameMesh = editorCenter.appendChild(editorFrame);
+  editorFrameMesh = env.appendChild(editorFrame);
   editorFrameMesh.name = "MyWindow";
-  editorFrameMesh.position.set(0, 0, 0);
+  editorFrameMesh.position.set(0, env.avatarHeight, 0);
 
   documentation = env.createElement("div");
   documentation.id = "Documentation";
@@ -127,12 +122,10 @@ env.addEventListener("update", function (dt) {
     scriptUpdateTimeout = setTimeout(updateScript, 500);
   }
 
-  editorCenter.position.copy(env.player.position);
-
   if (scriptAnimate) {
     // If quality has degraded, it's likely because the user bombed on a script.
     // Let's help them not lose their lunch.
-    if (env.quality === Primrose.Quality.NONE) {
+    if (env.quality === Quality.NONE) {
       scriptAnimate = null;
       wipeScene();
     }
@@ -204,8 +197,8 @@ function updateScript() {
       if (!scriptAnimate) {
         console.log("----- No update script provided -----");
       }
-      else if (env.quality === Primrose.Quality.NONE) {
-        env.quality = Primrose.Quality.MEDIUM;
+      else if (env.quality === Quality.NONE) {
+        env.quality = Quality.MEDIUM;
       }
     }
     catch (exp) {
@@ -242,7 +235,8 @@ function getSourceCode(skipReload) {
   // we use the script from a saved function and assume
   // it has been formatted with 2 spaces per-line.
   if (src === defaultDemo) {
-    var lines = src.replace("\r\n", "\n").split("\n");
+    var lines = src.replace("\r\n", "\n")
+      .split("\n");
     lines.pop();
     lines.shift();
     for (var i = 0; i < lines.length; ++i) {
@@ -263,9 +257,9 @@ function testDemo(scene) {
     t = 0,
     R = Primrose.Random,
     start = put(hub())
-      .on(scene)
-      .at(-MIDX, 0, -DEPTH - 2)
-      .obj();
+    .on(scene)
+    .at(-MIDX, 0, -DEPTH - 2)
+    .obj();
 
   var balls = [];
 
@@ -273,8 +267,8 @@ function testDemo(scene) {
     balls.push(put(brick(DECK))
       .on(start)
       .at(R.int(WIDTH),
-          R.int(HEIGHT),
-          R.int(DEPTH))
+        R.int(HEIGHT),
+        R.int(DEPTH))
       .obj());
 
     balls[i].velocity = v3(
@@ -289,15 +283,16 @@ function testDemo(scene) {
       var ball = balls[i],
         p = ball.position,
         v = ball.velocity;
-      p.add(v.clone().multiplyScalar(dt));
+      p.add(v.clone()
+        .multiplyScalar(dt));
       if (p.x < 0 && v.x < 0 || WIDTH <= p.x && v.x > 0) {
         v.x *= -1;
       }
       if (p.y < 1 && v.y < 0 || HEIGHT <= p.y && v.y > 0) {
         v.y *= -1;
       }
-      if (p.z < 0 && v.z < 0
-        || DEPTH <= p.z && v.z > 0) {
+      if (p.z < 0 && v.z < 0 ||
+        DEPTH <= p.z && v.z > 0) {
         v.z *= -1;
       }
     }

@@ -5,16 +5,14 @@ var GRASS = "../images/grass.png",
   DECK = "../images/deck.png",
   CODE_KEY = "Pacman code",
 
-  env = new Primrose.BrowserEnvironment("Pacman", {
-    quality: Primrose.Quality.VERYLOW,
+  env = new Primrose.BrowserEnvironment({
+    quality: Quality.HIGH,
     autoScaleQuality: false,
     autoRescaleQuality: false,
     backgroundColor: 0x000000,
     skyTexture: DECK,
     ambientSound: "../audio/menu.ogg",
     groundTexture: DECK,
-    fullScreenIcon: "../models/monitor.obj",
-    VRIcon: "../models/cardboard.obj",
     font: "../fonts/helvetiker_regular.typeface.js"
   }),
 
@@ -61,7 +59,7 @@ env.addEventListener("ready", function () {
 
   editorFrameMesh = editorCenter.appendChild(editorFrame);
   editorFrameMesh.name = "EditorFrameMesh";
-  editorFrameMesh.position.set(0, 0, 0);
+  editorFrameMesh.position.set(0, env.avatarHeight, 0);
   editorFrameMesh.visible = false;
   editorFrameMesh.disabled = true;
 }, false);
@@ -84,12 +82,10 @@ env.addEventListener("update", function (dt) {
     scriptUpdateTimeout = setTimeout(updateScript, 500);
   }
 
-  editorCenter.position.copy(env.player.position);
-
   if (scriptAnimate) {
     // If quality has degraded, it's likely because the user bombed on a script.
     // Let's help them not lose their lunch.
-    if (env.quality === Primrose.Quality.NONE) {
+    if (env.quality === Quality.NONE) {
       scriptAnimate = null;
       wipeScene();
     }
@@ -112,7 +108,8 @@ function getSourceCode(skipReload) {
   // we use the script from a saved function and assume
   // it has been formatted with 2 spaces per-line.
   if (src === defaultDemo) {
-    var lines = src.replace("\r\n", "\n").split("\n");
+    var lines = src.replace("\r\n", "\n")
+      .split("\n");
     lines.pop();
     lines.shift();
     for (var i = 0; i < lines.length; ++i) {
@@ -163,29 +160,32 @@ function pacman() {
       C(row[x] | 0, x, y);
     }
   }
-
-  L("../models/ghost.obj").then(function (ghost) {
-    ghosts = colors.map(function (color, i) {
-      var g = ghost.clone(),
-        body = g.children[0];
-      textured(body, color);
-      scene.appendChild(g);
-      g.position.set(i * 3 - 4, 0, -5);
-      g.velocity = v3(0, 0, 0);
-      g.velocity.x = R(-1, 2);
-      if (g.velocity.x === 0 && g.velocity.z === 0) {
-        g.velocity.z = R(-1, 2);
-      }
-      return g;
+  console.log("Here we go");
+  L("../models/ghost.obj")
+    .then(function (ghost) {
+      console.log("ghost", ghost);
+      ghosts = colors.map(function (color, i) {
+        var g = ghost.clone(),
+          body = g.children[0];
+        textured(body, color);
+        scene.appendChild(g);
+        g.position.set(i * 3 - 4, 0, -5);
+        g.velocity = v3(0, 0, 0);
+        g.velocity.x = R(-1, 2);
+        if (g.velocity.x === 0 && g.velocity.z === 0) {
+          g.velocity.z = R(-1, 2);
+        }
+        return g;
+      });
     });
-  });
 
   function collisionCheck(dt, a, t) {
     var x = Math.floor((a.position.x + W / 2 + 1) / T),
       y = Math.floor((a.position.z + H / 2 + 1) / T),
       row = map[y],
       tile = row && row[x] | 0;
-    var v = a.velocity.clone().multiplyScalar(-dt * 1.5);
+    var v = a.velocity.clone()
+      .multiplyScalar(-dt * 1.5);
     if (tile > 0) {
       if (t || a.isOnGround) {
         a.position.add(v);
@@ -193,8 +193,7 @@ function pacman() {
       if (t) {
         a.velocity.set(
           a.velocity.z,
-          0,
-          -a.velocity.x
+          0, -a.velocity.x
         );
       }
     }
@@ -203,15 +202,16 @@ function pacman() {
   return function (dt) {
     if (ghosts) {
       ghosts.forEach(function (g) {
-        g.position.add(g.velocity.clone().multiplyScalar(dt));
-        collisionCheck(dt, g, env.player);
+        g.position.add(g.velocity.clone()
+          .multiplyScalar(dt));
+        collisionCheck(dt, g, env.input.head);
       });
     }
-    collisionCheck(dt, env.player, null);
+    collisionCheck(dt, env.input.head, null);
   }
 }
 
-env.addEventListener("keydown", function (evt) {
+window.addEventListener("keydown", function (evt) {
   if (evt[modA] && evt[modB]) {
     if (evt.keyCode === Primrose.Keys.E) {
       if (editorFrameMesh.visible && env.currentControl && env.currentControl.focused) {
@@ -222,7 +222,7 @@ env.addEventListener("keydown", function (evt) {
       editorFrameMesh.disabled = !editorFrameMesh.disabled;
     }
     else if (evt.keyCode === Primrose.Keys.E && editor) {
-      Primrose.HTTP.sendObject("saveScript", {
+      Primrose.HTTP.postObject("saveScript", {
         "Content-Type": "application/json",
         data: {
           fileName: "pacman",
@@ -269,8 +269,8 @@ function updateScript() {
       if (!scriptAnimate) {
         console.log("----- No update script provided -----");
       }
-      else if (env.quality === Primrose.Quality.NONE) {
-        env.quality = Primrose.Quality.MEDIUM;
+      else if (env.quality === Quality.NONE) {
+        env.quality = Quality.MEDIUM;
       }
     }
     catch (exp) {
