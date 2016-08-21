@@ -36,7 +36,7 @@ function peer(evt) {
       toSocket = toUser.devices[toIndex];
 
     if (fromSocket && toSocket) {
-      ["offer", "answer", "ice"].forEach((evtName) => {
+      ["offer", "answer", "ice", "cancel"].forEach((evtName) => {
         const thunk = (obj) => toSocket.emit(evtName, obj);
         fromUser.handlers[fromIndex][evtName] = thunk;
         fromSocket.on(evtName, thunk);

@@ -87,7 +87,8 @@ class User {
       getDeviceIndex: socket.emit.bind(socket, "deviceIndex", index),
       offer: null,
       answer: null,
-      ice: null
+      ice: null,
+      cancel: null
     };
 
     this.handlers[index] = handlers;
