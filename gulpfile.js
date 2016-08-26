@@ -1,33 +1,24 @@
 ﻿var gulp = require("gulp"),
-  concat = require("gulp-concat"),
-  exec = require("child_process").exec,
-  zip = require("gulp-zip"),
+  fs = require("fs"),
+  zip = require("gulp-zip");
 
-  hasPrimrose = require("fs").existsSync("../Primrose"),
-  primroseInfo = hasPrimrose && require("../Primrose/package.json");
+if(fs.existsSync("../Primrose")){
+  var primroseInfo = require("../Primrose/package.json"),
+    primroseFiles = primroseInfo.files
+      .map((f) => "../Primrose/" + f.replace(/\/$/, "/**/*"))
+      .concat([
+        "!../Primorse/**/*.pug",
+        "!../Primorse/**/*.styl",
+        "!../Primrose/src/**/*",
+        "!../Primrose/StartHere*"
+      ]);
 
-var quickstartDependencies = [];
+  gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: "../Primrose" })
+    .pipe(gulp.dest(".")));
 
-if(hasPrimrose){
-  gulp.task("copy:primrose", function () {
-    return gulp.src(primroseInfo.files.map(function (f) {
-      f = "../Primrose/" + f;
-      if (f[f.length - 1] === "/") {
-        f += "**/*";
-      }
-      return f;
-    }).concat(["!../Primrose/src/**/*", "!../Primrose/StartHere*"]),
-    { base: "../Primrose" })
-    .pipe(gulp.dest("."));
-  });
-  quickstartDependencies.push("copy:primrose");
+  gulp.task("zip:quickstart", ["copy:primrose"], () => gulp.src(["quickstart/**/*"])
+    .pipe(zip("PrimroseQuickstart.zip"))
+    .pipe(gulp.dest(".")));
+
+  gulp.task("default", ["zip:quickstart"]);
 }
-
-function zipQuickstart() {
-  return gulp.src(["quickstart/**/*"])
-  .pipe(zip("PrimroseQuickstart.zip"))
-  .pipe(gulp.dest("."));
-}
-
-gulp.task("zip:quickstart", quickstartDependencies, zipQuickstart);
-gulp.task("default", ["zip:quickstart"]);
