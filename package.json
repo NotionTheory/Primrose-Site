@@ -50,32 +50,9 @@
     "highlighting"
   ],
   "dependencies": {
-    "autotrack": "^0.6.5",
     "azure-storage": "^0.10.0",
-    "babel-preset-es2015": "^6.6.0",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-concat": "^2.6.0",
-    "gulp-cssmin": "^0.1.7",
-    "gulp-data": "^1.2.1",
-    "gulp-footer": "^1.0.5",
-    "gulp-jshint": "^2.0.0",
-    "gulp-pug": "^2.0.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-stylus": "^2.5.0",
-    "gulp-uglify": "^1.5.3",
-    "gulp-zip": "^3.2.0",
-    "jshint": "^2.9.2",
-    "leapjs": "^0.6.4",
-    "bare-bones-logger": "^1.0.2",
     "mime": "^1.3.4",
-    "pliny": "^3.2.0",
-    "primrose": "git+https://github.com/NotionTheory/Primrose.git",
-    "pug": "^2.0.0-alpha6",
-    "socket.io": "^1.4.4",
-    "socket.io-client": "^1.4.4",
-    "three": "^0.76.1",
-    "uws": "^0.4.1",
-    "webvr-bootstrapper": "^3.0.0"
+    "primrose": "^0.26.5",
+    "socket.io": "^1.4.4"
   }
 }
