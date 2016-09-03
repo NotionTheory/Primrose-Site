@@ -2,19 +2,20 @@
   build = require("notiontheory-basic-build"),
   fs = require("fs"),
   zip = require("gulp-zip"),
-  nt = build.setup(gulp, require("./package.json"));
+  nt = build.setup(gulp, require("./package.json")),
+  root = true ? "../Primrose/" : "./node_modules/primrose/";
 
-var primroseInfo = require("./node_modules/primrose/package.json"),
+var primroseInfo = require(root + "package.json"),
   primroseFiles = primroseInfo.files
-    .map((f) => "node_modules/primrose/" + f.replace(/\/$/, "/**/*"))
+    .map((f) => root + f.replace(/\/$/, "/**/*"))
     .concat([
-      "!node_modules/primorse/**/*.pug",
-      "!node_modules/primorse/**/*.styl",
-      "!node_modules/primrose/src/**/*",
-      "!node_modules/primrose/StartHere*"
+      "!" + root + "**/*.pug",
+      "!" + root + "**/*.styl",
+      "!" + root + "src/**/*",
+      "!" + root + "StartHere*"
     ]);
 
-gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: "node_modules/Primrose" })
+gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: root })
   .pipe(gulp.dest(".")));
 
 gulp.task("zip:quickstart", ["copy:primrose"], () => gulp.src(["quickstart/**/*"])
