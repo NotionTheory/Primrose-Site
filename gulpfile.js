@@ -1,8 +1,5 @@
 ﻿var gulp = require("gulp"),
-  build = require("notiontheory-basic-build"),
-  fs = require("fs"),
   zip = require("gulp-zip"),
-  nt = build.setup(gulp, require("./package.json")),
   root = true ? "../Primrose/" : "./node_modules/primrose/";
 
 var primroseInfo = require(root + "package.json"),
