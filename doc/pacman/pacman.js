@@ -1,26 +1,26 @@
 var R = Primrose.Random.int,
-  L = Primrose.ModelLoader.loadObject,
-  T = 3,
-  W = 30,
-  H = 30,
-  colors = [
-    0xff0000,
-    0xffff00,
-    0xff00ff,
-    0x00ffff
-  ],
-  ghosts,
-  map = [
-    "12222222221",
-    "10000000001",
-    "10222022201",
-    "10001000001",
-    "10101022201",
-    "10100010101",
-    "10222220101",
-    "10000000001",
-    "12222222221"
-  ];
+    L = Primrose.ModelLoader.loadObject,
+    T = 3,
+    W = 30,
+    H = 30,
+    colors = [
+      0xff0000,
+      0xffff00,
+      0xff00ff,
+      0x00ffff
+    ],
+    ghosts,
+    map = [
+      "12222222221",
+      "10000000001",
+      "10222022201",
+      "10001000001",
+      "10101022201",
+      "10100010101",
+      "10222220101",
+      "10000000001",
+      "12222222221"
+    ];
 
 function C(n, x, y) {
   if (n !== 0) {
@@ -80,8 +80,8 @@ return function (dt) {
     ghosts.forEach(function (g) {
       g.position.add(g.velocity.clone()
         .multiplyScalar(dt));
-      collisionCheck(dt, g, env.head);
+      collisionCheck(dt, g, env.input.head);
     });
   }
-  collisionCheck(dt, env.head, null);
+  collisionCheck(dt, env.input.head, null);
 }
