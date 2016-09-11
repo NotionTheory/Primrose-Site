@@ -32,7 +32,7 @@
   "scripts": {
     "start": "node server.js",
     "redev": "node server.js --mode=dev --path=..",
-    "dev": "node server.js --mode=dev --path=.. --url=Primrose/meeting/",
+    "dev": "node server.js --mode=dev --path=.. --url=Legend3D/",
     "demo": "node server.js --mode=dev --path=../Primrose --url=meeting/",
     "local": "node server.js --mode=localOnly --path=.. --url=Primrose/meeting/",
     "test": "node server.js --mode=dev --path=.. --url=replay-telemetry/test.html",
