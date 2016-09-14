@@ -1693,15 +1693,6 @@ var BrowserEnvironment = function (_Primrose$AbstractEve) {
     var POSITION = new THREE.Vector3(),
         lastTeleport = 0;
 
-    _this.teleport = function (pos) {
-      var t = performance.now(),
-          dt = t - lastTeleport;
-      if (dt > TELEPORT_COOLDOWN) {
-        lastTeleport = t;
-        _this.input.moveStage(pos);
-      }
-    };
-
     _this.selectControl = function (evt) {
       var obj = evt.hit && evt.hit.object;
 
@@ -1729,7 +1720,12 @@ var BrowserEnvironment = function (_Primrose$AbstractEve) {
         } else if (evt.type === "pointermove" || evt.type === "gazemove") {
           evt.pointer.moveTeleportPad(POSITION);
         } else if (evt.type === "pointerend" || evt.type === "gazecomplete") {
-          _this.teleport(POSITION);
+          var t = performance.now(),
+              dt = t - lastTeleport;
+          if (dt > TELEPORT_COOLDOWN) {
+            lastTeleport = t;
+            _this.input.moveStage(POSITION);
+          }
         }
       }
 
@@ -1895,13 +1891,6 @@ var BrowserEnvironment = function (_Primrose$AbstractEve) {
         }
       }
 
-      var maxTabIndex = 0,
-          elementsWithTabIndex = document.querySelectorAll("[tabIndex]");
-      for (var i = 0; i < elementsWithTabIndex.length; ++i) {
-        maxTabIndex = Math.max(maxTabIndex, elementsWithTabIndex[i].tabIndex);
-      }
-
-      _this.renderer.domElement.tabIndex = maxTabIndex + 1;
       _this.renderer.domElement.addEventListener('webglcontextlost', _this.stop, false);
       _this.renderer.domElement.addEventListener('webglcontextrestored', _this.start, false);
 
@@ -3387,9 +3376,7 @@ var Pointer = function (_Primrose$AbstractEve) {
       arr.array[i] -= LASER_LENGTH * 0.5 + 0.5;
     }
 
-    _this.disk = colored(sphere(TELEPORT_PAD_RADIUS, 128, 3), _this.color, {
-      emissive: _this.emission
-    });
+    _this.disk = colored(sphere(TELEPORT_PAD_RADIUS, 128, 3), _this.material);
     _this.disk.geometry.computeBoundingBox();
     _this.disk.geometry.vertices.forEach(function (v) {
       v.y = 0.1 * (v.y - _this.disk.geometry.boundingBox.min.y);
@@ -3397,14 +3384,10 @@ var Pointer = function (_Primrose$AbstractEve) {
     _this.disk.visible = false;
     _this.disk.geometry.computeBoundingBox();
 
-    _this.gazeInner = colored(circle(GAZE_RING_INNER / 2, 10), _this.color, {
-      emissive: _this.emission
-    });
+    _this.gazeInner = colored(circle(GAZE_RING_INNER / 2, 10), _this.material);
     _this.gazeInner.position.set(0, 0, -0.5);
 
-    _this.gazeOuter = colored(ring(GAZE_RING_INNER, GAZE_RING_OUTER, 10), _this.color, {
-      emissive: _this.emission
-    });
+    _this.gazeOuter = colored(ring(GAZE_RING_INNER, GAZE_RING_OUTER, 10), _this.material);
     _this.gazeOuter.visible = false;
     _this.gazeInner.add(_this.gazeOuter);
 
@@ -3576,7 +3559,7 @@ var Pointer = function (_Primrose$AbstractEve) {
             } else {
               var p = Math.round(36 * dt / GAZE_TIMEOUT),
                   a = 2 * Math.PI * p / 36;
-              this.gazeOuter.geometry = ring(GAZE_RING_INNER, GAZE_RING_OUTER, 36, p, 0, a);
+              this.gazeOuter.geometry = ring(GAZE_RING_INNER, GAZE_RING_OUTER, p, 0, a);
               if (moved) {
                 this.emit("gazemove", evt);
               }
@@ -14830,4 +14813,4 @@ function toString(digits) {
 })();
     // end D:\Documents\VR\Primrose\src\THREE\Vector3\prototype\toString.js
     ////////////////////////////////////////////////////////////////////////////////
-console.info("primrose v0.26.22. see https://www.primrosevr.com for more information.");
+console.info("primrose v0.26.21. see https://www.primrosevr.com for more information.");
