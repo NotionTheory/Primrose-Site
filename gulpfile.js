@@ -1,14 +1,16 @@
 ﻿var gulp = require("gulp"),
   zip = require("gulp-zip"),
   rename = require("gulp-rename"),
-
   // if we have a local copy of the library, use it.
   fs = require("fs"),
   root = fs.existsSync("../Primrose/") ?
     "../Primrose/" :
     "./node_modules/primrose/",
-
   primroseInfo = require(root + "package.json"),
+  pkg = require("./package.json"),
+  build = require("../notiontheory-basic-build/src"),
+  nt = build.setup(gulp, pkg),
+
   primroseFiles = primroseInfo.files
     .map((f) => root + f.replace(/\/$/, "/**/*"))
     .concat([
@@ -17,6 +19,8 @@
       "!" + root + "src/**/*",
       "!" + root + "StartHere*"
     ]);
+
+pkg.version = primroseInfo.version;
 
 gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: root })
   .pipe(gulp.dest(".")));
