@@ -56,6 +56,7 @@
     "socket.io": "^1.4.4"
   },
   "devDependencies": {
+    "gulp-rename": "^1.2.2",
     "notiontheory-basic-build": "^2.3.3"
   }
 }
