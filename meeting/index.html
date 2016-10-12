@@ -11,7 +11,7 @@
       c = document.getElementById("fullScreenButtonContainer"),
       t = document.getElementById("controls");
     window.addEventListener("vrdisplaypresentchange", function(){
-      var cd = env.input.VR.currentDevice;
+      var cd = app.input.VR.currentDevice;
       t.style.display = cd && cd.isPresenting ? "none" : "";
     });
     p.style.display = "none";
@@ -24,7 +24,7 @@
           btn.className = "secondary";
           btn.appendChild(document.createTextNode(display.displayName));
           btn.addEventListener("click", function(i){
-            env.goFullScreen(i, "Button");
+            app.goFullScreen(i, "Button");
           }.bind(null, i), false);
           c.appendChild(btn);
         }
