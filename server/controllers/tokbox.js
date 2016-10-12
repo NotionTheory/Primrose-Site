@@ -20,10 +20,11 @@ function getSessionID() {
 const sessions = {};
 
 module.exports = {
-  URLPattern: /^\/tokbox\/?\?room=(\w+)&user=(\w+)$/,
+  URLPattern: /^\/tokbox\/?\?room=([a-zA-Z0-9_%]+)&user=([a-zA-Z0-9_%]+)$/,
   GET: {
     "*/*": (room, user, state) => {
-      console.log("tokbox", room, user);
+      room = decodeURI(room).toLocaleUpperCase();
+      user = decodeURI(user).toLocaleUpperCase();
       if(!sessions[room]){
         sessions[room] = getSessionID();
       }
@@ -32,7 +33,7 @@ module.exports = {
           apiKey: API_KEY,
           sessionId: session.sessionId,
           token: session.generateToken({
-            data: "user=" + user && user.toLocaleUpperCase()
+            data: user
           })
         };
       }).then(Message.json);
