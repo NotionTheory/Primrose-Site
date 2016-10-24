@@ -8,7 +8,7 @@
     "./node_modules/primrose/",
   primroseInfo = require(root + "package.json"),
   pkg = require("./package.json"),
-  build = require("../notiontheory-basic-build/src"),
+  build = require("notiontheory-basic-build"),
   nt = build.setup(gulp, pkg),
 
   primroseFiles = primroseInfo.files
