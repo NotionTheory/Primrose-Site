@@ -1,4 +1,4 @@
-cd ../ && git clone https://www.github.com/NotionTheory/webvr-polyfill.git && cd webvr-polyfill && npm install
+cd ../webvr-polyfill && echo "updating webvr-polyfill" && git pull && npm install && npm update
 cd ../Legend3D && echo "updating Legend3D" && git pull && npm install && npm update
 cd ../logger && echo "updating logger" && git pull && npm install && npm update
 cd ../notiontheory-basic-build && echo "updating notiontheory-basic-build" && git pull && npm install && npm update
