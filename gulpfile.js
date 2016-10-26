@@ -21,7 +21,7 @@
     ]);
 
 pkg.version = primroseInfo.version;
-fs.writeFileSync("package.json", JSON.stringify(pkg));
+fs.writeFileSync("package.json", JSON.stringify(pkg, (k, v) => k === "packageName" ? undefined : v, 2));
 
 gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: root })
   .pipe(gulp.dest(".")));
