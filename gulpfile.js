@@ -44,3 +44,5 @@ gulp.task("zip:quickstart", ["copy:primrose"], () => gulp.src(["quickstart/**/*"
 
 gulp.task("default", ["zip:quickstart", "archive"]);
 gulp.task("release", ["default"]);
+
+gulp.task("kablamo", build.exec("gulp yolo && gulp trololo"));
