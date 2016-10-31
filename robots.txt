@@ -1,2 +1,2 @@
 User-agent: *
-Disallow: /nbproject/
+Disallow: /artwork/
