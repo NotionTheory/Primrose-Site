@@ -1,29 +1,31 @@
 ﻿var gulp = require("gulp"),
   zip = require("gulp-zip"),
   rename = require("gulp-rename"),
-  // if we have a local copy of the library, use it.
   fs = require("fs"),
-  root = fs.existsSync("../Primrose/") ?
-    "../Primrose/" :
-    "./node_modules/primrose/",
-  primroseInfo = require(root + "package.json"),
+  primroseInfo = require("../Primrose/package.json"),
   pkg = require("./package.json"),
   build = require("notiontheory-basic-build"),
   nt = build.setup(gulp, pkg),
 
   primroseFiles = primroseInfo.files
-    .map((f) => root + f.replace(/\/$/, "/**/*"))
+    .map((f) => "../Primrose/" + f.replace(/\/$/, "/**/*"))
     .concat([
-      "!" + root + "**/*.pug",
-      "!" + root + "**/*.styl",
-      "!" + root + "src/**/*",
-      "!" + root + "StartHere*"
+      "!../Primrose/**/*.pug",
+      "!../Primrose/**/*.styl",
+      "!../Primrose/src/**/*",
+      "!../Primrose/StartHere*"
     ]);
 
+primroseFiles.push("../Primrose//index.html");
 pkg.version = primroseInfo.version;
-fs.writeFileSync("package.json", JSON.stringify(pkg, (k, v) => k === "packageName" ? undefined : v, 2));
+fs.writeFileSync(
+  "package.json",
+  JSON.stringify(
+    pkg,
+    (k, v) => k === "packageName" ? undefined : v,
+    2));
 
-gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: root })
+gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: "../Primrose/" })
   .pipe(gulp.dest(".")));
 
 gulp.task("archive", ["copy:primrose"], () => gulp.src(["Primrose*.js"])
