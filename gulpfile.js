@@ -16,7 +16,8 @@
       "!../Primrose/StartHere*"
     ]);
 
-primroseFiles.push("../Primrose//index.html");
+primroseFiles.push("../Primrose/index.html");
+
 pkg.version = primroseInfo.version;
 fs.writeFileSync(
   "package.json",
