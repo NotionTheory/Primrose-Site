@@ -43,9 +43,11 @@ function fixAudio(){
     auds[i].play();
   }
 
-  env.options.fullScreenElement.removeEventListener("mousedown", fixAudio);
-  env.options.fullScreenElement.removeEventListener("touchstart", fixAudio);
-  env.options.fullScreenElement.removeEventListener("keydown", fixAudio);
+  if(auds.length > 0){
+    env.options.fullScreenElement.removeEventListener("mousedown", fixAudio);
+    env.options.fullScreenElement.removeEventListener("touchstart", fixAudio);
+    env.options.fullScreenElement.removeEventListener("keydown", fixAudio);
+  }
 }
 
 env.addEventListener("ready", function(){
