@@ -1,6 +1,6 @@
-var numButtons = 16,
-    height = Math.floor(Math.sqrt(numButtons)),
-    width = Math.ceil(numButtons/height),
+var height = 8,
+    width = 4,
+    numButtons = width * height,
     midWidth = (width - 1) / 2,
     midHeight = (height - 1) / 2,
     colorOn = 0xffffff,
@@ -14,15 +14,16 @@ var numButtons = 16,
     padDepth = 0.02,
     textSize = 0.05,
     skipOne = false,
-    perMeasure = 1 / width,
-    DIST = new THREE.Vector3(),
+    perMeasure = 2 / height,
+    DIST = v3(),
     env = new Primrose.BrowserEnvironment({
       groundTexture: "../images/deck.png",
       font: "../fonts/helvetiker_regular.typeface.json",
       backgroundColor: 0x000000,
       useFog: true,
       useGaze: isMobile,
-      drawDistance: 10
+      drawDistance: 10,
+      fullScreenButtonContainer: "#fullScreenButtonContainer"
     });
 
 function text(size, text) {
@@ -34,7 +35,8 @@ function Board(type){
   this.object = hub();
   this.title = put(text3D(0.15, type)
       .center()
-      .colored("text" + type, colorPlay))
+      .colored(colorPlay)
+      .named("text" + type))
     .on(this.object)
     .at(0, 0.7, -1.3)
     .obj();
@@ -47,36 +49,40 @@ function Board(type){
       lon = (midWidth - x) * 10,
       lat = (y - midHeight) * 10,
       btn = box(padSize, padSize, padDepth)
-        .colored("btn" + i, colorOff)
+        .colored(colorOff)
+        .named("btn" + i)
         .latLon(lat, lon);
     put(box(padSize * 1.1, padSize * 1.1, padDepth * 0.9)
-        .colored("bevel" + i, colorPlay))
+        .colored(colorPlay)
+        .named("bevel" + i))
       .on(btn);
     env.registerPickableObject(btn);
     btn.onselect = this.select.bind(this, i);
-    btn.onenter = this.play.bind(this, i);
+    btn.onenter = this.play.bind(this, i, 0);
     this.object.add(btn);
     this.btns.push(btn);
   }.bind(this));
 }
 
-Board.prototype.play = function(i) {
+Board.prototype.play = function(i, dt) {
   this.highlight(i, colorPlay);
   this.object.getWorldDirection(DIST);
-  env.music.play(this.type, 25 - numButtons + i * 4, 0.25, perMeasure * 0.85,
-    this.object.x, this.object.y, this.object.z,
-    DIST.x, DIST.y, DIST.z)
-    .then(function(){
-      this.highlight(i);
-    }.bind(this));
+  var duration = perMeasure * 0.85;
+  env.music.play(this.type, 25 - numButtons + i * 3, 0.25, duration, dt)
+    .at(this.object.x, this.object.y, this.object.z,
+        DIST.x, DIST.y, DIST.z);
+  setTimeout(this.highlight.bind(this, i), duration * 1000);
 }
 
 Board.prototype.update = function() {
   if(measure !== lastMeasure){
-    for(var y = 0; y < height; ++y){
-      var i = y * width + measure;
+    const time = env.audio.context.currentTime,
+          measureTime = perMeasure * Math.ceil(time / perMeasure),
+          dt = measureTime - time;
+    for(var y = 0; y < width; ++y){
+      var i = y * height + measure;
       if(this.btnState[i]){
-        this.play(i);
+        this.play(i, dt);
       }
     }
   }
@@ -84,10 +90,11 @@ Board.prototype.update = function() {
   this.object.position.lerp(DIST, 0.01);
 };
 
+
 Board.prototype.highlight = function(i, color) {
   color = color || this.btnState[i] && colorOn || colorOff;
   var btn = this.btns[i]
-  btn.colored(btn.name, color);
+  btn.colored(color).named(btn.name);
 };
 
 Board.prototype.select = function(i, evt) {
@@ -98,7 +105,7 @@ Board.prototype.select = function(i, evt) {
 };
 
 env.addEventListener("ready", function () {
-  const types = Primrose.Output.Music.TYPES,
+  const types = Primrose.Audio.Music.TYPES,
     nTypes = types.length;
   types.forEach(function(type, t) {
     var board = new Board(type);
@@ -113,16 +120,12 @@ env.addEventListener("update", function(dt){
     t += dt;
     if(t > perMeasure){
       t -= perMeasure;
-      measure = (measure + 1) % width;
+      measure = (measure + 1) % height;
     }
-    boards.forEach(function(board) {
-      board.update();
-    });
+    boards.forEach((board) => board.update());
     lastMeasure = measure;
   }
   skipOne = false;
 });
 
-window.addEventListener("focus", function(){
-  skipOne = true;
-});
+window.addEventListener("focus", () =>  skipOne = true);

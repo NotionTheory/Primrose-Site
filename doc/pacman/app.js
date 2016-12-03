@@ -6,11 +6,12 @@ var GRASS = "../images/grass.png",
   CODE_KEY = "Pacman code",
 
   env = new Primrose.BrowserEnvironment({
-    quality: Quality.HIGH,
+    quality: Primrose.Quality.HIGH,
     backgroundColor: 0x000000,
     skyTexture: DECK,
     groundTexture: DECK,
-    font: "../fonts/helvetiker_regular.typeface.json"
+    font: "../fonts/helvetiker_regular.typeface.json",
+    fullScreenButtonContainer: "#fullScreenButtonContainer"
   }),
 
   editor = null,
@@ -18,10 +19,10 @@ var GRASS = "../images/grass.png",
   editorFrame = null,
   editorFrameMesh = null,
 
-  modA = isOSX ? "metaKey" : "ctrlKey",
-  modB = isOSX ? "altKey" : "shiftKey",
-  cmdA = isOSX ? "CMD" : "CTRL",
-  cmdB = isOSX ? "OPT" : "SHIFT",
+  modA = isMacOS ? "metaKey" : "ctrlKey",
+  modB = isMacOS ? "altKey" : "shiftKey",
+  cmdA = isMacOS ? "CMD" : "CTRL",
+  cmdB = isMacOS ? "OPT" : "SHIFT",
   cmdPre = cmdA + "+" + cmdB,
 
   scriptUpdateTimeout,
@@ -82,7 +83,7 @@ env.addEventListener("update", function (dt) {
   if (scriptAnimate) {
     // If quality has degraded, it's likely because the user bombed on a script.
     // Let's help them not lose their lunch.
-    if (env.quality === Quality.NONE) {
+    if (env.quality === Primrose.Quality.NONE) {
       scriptAnimate = null;
       wipeScene();
     }
@@ -119,7 +120,7 @@ function getSourceCode(skipReload) {
 
 function pacman() {
   var R = Primrose.Random.int,
-    L = Primrose.ModelLoader.loadObject,
+    L = Primrose.Graphics.ModelLoader.loadObject,
     T = 3,
     W = 30,
     H = 30,
@@ -266,8 +267,8 @@ function updateScript() {
       if (!scriptAnimate) {
         console.log("----- No update script provided -----");
       }
-      else if (env.quality === Quality.NONE) {
-        env.quality = Quality.MEDIUM;
+      else if (env.quality === Primrose.Quality.NONE) {
+        env.quality = Primrose.Quality.MEDIUM;
       }
     }
     catch (exp) {
