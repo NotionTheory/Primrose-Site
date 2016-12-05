@@ -3,8 +3,9 @@ import BrowserEnvironment from "../../../src/Primrose/BrowserEnvironment";
 import Keys from "../../../src/Primrose/Keys";
 import JavaScript from "../../../src/Primrose/Text/Grammars/JavaScript";
 import Dark from "../../../src/Primrose/Text/Themes/Dark";
-import * as liveAPI from "../../../src/live-api";
 import getSetting from "../../../src/util/getSetting";
+import setSetting from "../../../src/util/setSetting";
+import * as liveAPI from "../../../src/live-api";
 import * as rand from "../../../src/Primrose/Random";
 import { Quality } from "../../../src/Primrose/constants";
 
@@ -14,17 +15,16 @@ var GRASS = "../images/grass.png",
   ROCK = "../images/rock.png",
   SAND = "../images/sand.png",
   WATER = "../images/water.png",
-  DECK = "../images/deck.png",
+  DECK = "../images/deck.png";
 
-  env = new BrowserEnvironment({
-    skyTexture: "../images/bg2.jpg",
-    groundTexture: GRASS,
-    font: "../fonts/helvetiker_regular.typeface.json",
-    fullScreenButtonContainer: "#fullScreenButtonContainer"
-  }),
+window.env = new BrowserEnvironment({
+  skyTexture: "../images/bg2.jpg",
+  groundTexture: GRASS,
+  font: "../fonts/helvetiker_regular.typeface.json",
+  fullScreenButtonContainer: "#fullScreenButtonContainer"
+});
 
-  subScene = hub(),
-
+var subScene = null,
   editor = null,
   editorFrame = null,
   editorFrameMesh = null,
@@ -40,6 +40,7 @@ var GRASS = "../images/grass.png",
   scriptAnimate = null;
 
 env.addEventListener("ready", function () {
+  subScene = hub();
   env.scene.add(subScene);
 
   var editorSize = isMobile ? 512 : 1024,
@@ -59,11 +60,12 @@ env.addEventListener("ready", function () {
   editor.tokenizer = JavaScript;
   editor.value = getSourceCode(isInIFrame);
 
+
   editorFrame.appendChild(editor);
 
   editorFrameMesh = env.appendChild(editorFrame);
   editorFrameMesh.name = "MyWindow";
-  editorFrameMesh.position.set(0, env.avatarHeight, 0);
+  editorFrameMesh.position.set(0, env.options.avatarHeight, 0);
 
   console.log("INSTRUCTIONS:");
   console.log(" - " + cmdPre + "+E to show/hide editor");
@@ -115,6 +117,7 @@ window.addEventListener("beforeunload", function (evt) {
 }, false);
 
 window.addEventListener("unload", function () {
+  console.log("unloading, going to try to save file?", !!editor);
   if (editor) {
     var script = editor.value;
     if (script.length > 0) {
@@ -133,7 +136,7 @@ var first = true;
 function updateScript() {
   var newScript = editor.value,
     exp;
-  if (newScript !== lastScript) {  
+  if (newScript !== lastScript) {
     env.transition(function() {
       scriptUpdateTimeout = null;
       lastScript = newScript;
@@ -143,18 +146,24 @@ function updateScript() {
       }
       console.log("----- loading new script -----");
       scriptAnimate = null;
-      var scriptUpdate = new Function("scene", newScript);
-      wipeScene();
-      scriptAnimate = scriptUpdate.call(env, subScene);
-      if (scriptAnimate) {
-        scriptAnimate(0);
+      try{
+        var scriptUpdate = new Function("scene", newScript);
+        wipeScene();
+        scriptAnimate = scriptUpdate.call(env, subScene);
+        if (scriptAnimate) {
+          scriptAnimate(0);
+        }
+        console.log("----- script loaded -----");
+        if (!scriptAnimate) {
+          console.log("----- No update script provided -----");
+        }
+        else if (env.quality === Quality.NONE) {
+          env.quality = Quality.MEDIUM;
+        }
       }
-      console.log("----- script loaded -----");
-      if (!scriptAnimate) {
-        console.log("----- No update script provided -----");
-      }
-      else if (env.quality === Quality.NONE) {
-        env.quality = Quality.MEDIUM;
+      catch(exp){
+        console.error(exp);
+        console.error(newScript);
       }
     }, null, first);
     first = false;

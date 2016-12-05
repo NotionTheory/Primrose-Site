@@ -6,7 +6,6 @@ var GRASS = "../images/grass.png",
   CODE_KEY = "Pacman code",
 
   env = new Primrose.BrowserEnvironment({
-    quality: Primrose.Quality.HIGH,
     backgroundColor: 0x000000,
     skyTexture: DECK,
     groundTexture: DECK,
@@ -57,7 +56,7 @@ env.addEventListener("ready", function () {
 
   editorFrameMesh = editorCenter.appendChild(editorFrame);
   editorFrameMesh.name = "EditorFrameMesh";
-  editorFrameMesh.position.set(0, env.avatarHeight, 0);
+  editorFrameMesh.position.set(0, env.options.avatarHeight, 0);
   editorFrameMesh.visible = false;
   editorFrameMesh.disabled = true;
 }, false);
@@ -69,8 +68,8 @@ window.addEventListener("beforeunload", function (evt) {
 }, false);
 
 window.addEventListener("unload", function (evt) {
-  var script = editor.value;
-  if (script.length > 0) {
+  var script = editor && editor.value;
+  if (script && script.length > 0) {
     setSetting(CODE_KEY, script);
   }
 }, false);
@@ -83,7 +82,7 @@ env.addEventListener("update", function (dt) {
   if (scriptAnimate) {
     // If quality has degraded, it's likely because the user bombed on a script.
     // Let's help them not lose their lunch.
-    if (env.quality === Primrose.Quality.NONE) {
+    if (env.quality === Primrose.Constants.Quality.NONE) {
       scriptAnimate = null;
       wipeScene();
     }
@@ -116,97 +115,6 @@ function getSourceCode(skipReload) {
     src = lines.join("\n");
   }
   return src.trim();
-}
-
-function pacman() {
-  var R = Primrose.Random.int,
-    L = Primrose.Graphics.ModelLoader.loadObject,
-    T = 3,
-    W = 30,
-    H = 30,
-    colors = [
-      0xff0000,
-      0xffff00,
-      0xff00ff,
-      0x00ffff
-    ],
-    ghosts,
-    map = [
-      "12222222221",
-      "10000000001",
-      "10222022201",
-      "10001000001",
-      "10101022201",
-      "10100010101",
-      "10222220101",
-      "10000000001",
-      "12222222221"
-    ];
-
-  function C(n, x, y) {
-    if (n !== 0) {
-      put(colored(cylinder(0.5, 0.5, T), 0x0000ff))
-        .on(scene)
-        .rot(0, n * Math.PI / 2, Math.PI / 2)
-        .at(T * x - W / 2, env.avatarHeight, T * y - H / 2);
-    }
-  }
-
-  for (var y = 0; y < map.length; ++y) {
-    var row = map[y];
-    for (var x = 0; x < row.length; ++x) {
-      C(row[x] | 0, x, y);
-    }
-  }
-  console.log("Here we go");
-  L("../models/ghost.obj")
-    .then(function (ghost) {
-      console.log("ghost", ghost);
-      ghosts = colors.map(function (color, i) {
-        var g = ghost.clone(),
-          body = g.children[0];
-        colored(body, color);
-        scene.appendChild(g);
-        g.position.set(i * 3 - 4, 0, -5);
-        g.velocity = v3(0, 0, 0);
-        g.velocity.x = R(-1, 2);
-        if (g.velocity.x === 0 && g.velocity.z === 0) {
-          g.velocity.z = R(-1, 2);
-        }
-        return g;
-      });
-    });
-
-  function collisionCheck(dt, a, t) {
-    var x = Math.floor((a.position.x + W / 2 + 1) / T),
-      y = Math.floor((a.position.z + H / 2 + 1) / T),
-      row = map[y],
-      tile = row && row[x] | 0;
-    var v = a.velocity.clone()
-      .multiplyScalar(-dt * 1.5);
-    if (tile > 0) {
-      if (t || a.isOnGround) {
-        a.position.add(v);
-      }
-      if (t) {
-        a.velocity.set(
-          a.velocity.z,
-          0, -a.velocity.x
-        );
-      }
-    }
-  }
-
-  return function (dt) {
-    if (ghosts) {
-      ghosts.forEach(function (g) {
-        g.position.add(g.velocity.clone()
-          .multiplyScalar(dt));
-        collisionCheck(dt, g, env.input.head);
-      });
-    }
-    collisionCheck(dt, env.input.head, null);
-  }
 }
 
 window.addEventListener("keydown", function (evt) {
@@ -267,8 +175,8 @@ function updateScript() {
       if (!scriptAnimate) {
         console.log("----- No update script provided -----");
       }
-      else if (env.quality === Primrose.Quality.NONE) {
-        env.quality = Primrose.Quality.MEDIUM;
+      else if (env.quality === Primrose.Constants.Quality.NONE) {
+        env.quality = Primrose.Constants.Quality.MEDIUM;
       }
     }
     catch (exp) {
@@ -285,5 +193,98 @@ function clrscr() {
     t.value = "";
     t.selectionStart = t.selectionEnd = t.value.length;
     t.scrollIntoView(t.frontCursor);
+  }
+}
+
+
+
+function pacman() {
+  var R = Primrose.Random.int,
+    L = Primrose.Graphics.ModelLoader.loadObject,
+    T = 3,
+    W = 30,
+    H = 30,
+    colors = [
+      0xff0000,
+      0xffff00,
+      0xff00ff,
+      0x00ffff
+    ],
+    ghosts,
+    map = [
+      "12222222221",
+      "10000000001",
+      "10222022201",
+      "10001000001",
+      "10101022201",
+      "10100010101",
+      "10222220101",
+      "10000000001",
+      "12222222221"
+    ];
+
+  function C(n, x, y) {
+    if (n !== 0) {
+      put(colored(cylinder(0.5, 0.5, T), 0x0000ff))
+        .on(scene)
+        .rot(0, n * Math.PI / 2, Math.PI / 2)
+        .at(T * x - W / 2, env.options.avatarHeight, T * y - H / 2);
+    }
+  }
+
+  for (var y = 0; y < map.length; ++y) {
+    var row = map[y];
+    for (var x = 0; x < row.length; ++x) {
+      C(row[x] | 0, x, y);
+    }
+  }
+  console.log("Here we go");
+  L("../models/ghost.obj")
+    .then(function (ghost) {
+      console.log("ghost", ghost);
+      ghosts = colors.map(function (color, i) {
+        var g = ghost.clone(),
+          body = g.children[0];
+        colored(body, color);
+        scene.appendChild(g);
+        g.position.set(i * 3 - 4, 0, -5);
+        g.velocity = v3(0, 0, 0);
+        g.velocity.x = R(-1, 2);
+        if (g.velocity.x === 0 && g.velocity.z === 0) {
+          g.velocity.z = R(-1, 2);
+        }
+        return g;
+      });
+    });
+
+  function collisionCheck(dt, a, t) {
+    var x = Math.floor((a.position.x + W / 2 + 1) / T),
+      y = Math.floor((a.position.z + H / 2 + 1) / T),
+      row = map[y],
+      tile = row && row[x] | 0;
+    var v = a.velocity.clone()
+      .multiplyScalar(-dt * 1.5);
+    if (tile > 0) {
+      if (t || a.isOnGround) {
+        a.position.add(v);
+      }
+      if (t) {
+        a.velocity.set(
+          a.velocity.z,
+          0, -a.velocity.x
+        );
+      }
+    }
+  }
+
+  return function (dt) {
+    if (ghosts) {
+      ghosts.forEach(function (g) {
+        g.position.add(g.velocity.clone()
+          .multiplyScalar(dt));
+        collisionCheck(dt, g, env.input.head);
+      });
+    }
+    collisionCheck(dt, env.input.head, null);
   }
 }
