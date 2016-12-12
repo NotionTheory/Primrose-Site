@@ -1,23 +1,12 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (factory((global.empty = global.empty || {})));
-}(this, (function (exports) { 'use strict';
-
-function number(min, max, power) {
-  power = power || 1;
-  if (max === undefined) {
-    max = min;
-    min = 0;
-  }
-  var delta = max - min,
-      n = Math.pow(Math.random(), power);
-  return min + n * delta;
-}
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (factory());
+}(this, (function () { 'use strict';
 
 var packageName = "PrimroseVR";
 
-var version = "0.29.4";
+var version = "0.29.6";
 
 
 
@@ -192,118 +181,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 
 
-var asyncGenerator = function () {
-  function AwaitValue(value) {
-    this.value = value;
-  }
 
-  function AsyncGenerator(gen) {
-    var front, back;
-
-    function send(key, arg) {
-      return new Promise(function (resolve, reject) {
-        var request = {
-          key: key,
-          arg: arg,
-          resolve: resolve,
-          reject: reject,
-          next: null
-        };
-
-        if (back) {
-          back = back.next = request;
-        } else {
-          front = back = request;
-          resume(key, arg);
-        }
-      });
-    }
-
-    function resume(key, arg) {
-      try {
-        var result = gen[key](arg);
-        var value = result.value;
-
-        if (value instanceof AwaitValue) {
-          Promise.resolve(value.value).then(function (arg) {
-            resume("next", arg);
-          }, function (arg) {
-            resume("throw", arg);
-          });
-        } else {
-          settle(result.done ? "return" : "normal", result.value);
-        }
-      } catch (err) {
-        settle("throw", err);
-      }
-    }
-
-    function settle(type, value) {
-      switch (type) {
-        case "return":
-          front.resolve({
-            value: value,
-            done: true
-          });
-          break;
-
-        case "throw":
-          front.reject(value);
-          break;
-
-        default:
-          front.resolve({
-            value: value,
-            done: false
-          });
-          break;
-      }
-
-      front = front.next;
-
-      if (front) {
-        resume(front.key, front.arg);
-      } else {
-        back = null;
-      }
-    }
-
-    this._invoke = send;
-
-    if (typeof gen.return !== "function") {
-      this.return = undefined;
-    }
-  }
-
-  if (typeof Symbol === "function" && Symbol.asyncIterator) {
-    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-      return this;
-    };
-  }
-
-  AsyncGenerator.prototype.next = function (arg) {
-    return this._invoke("next", arg);
-  };
-
-  AsyncGenerator.prototype.throw = function (arg) {
-    return this._invoke("throw", arg);
-  };
-
-  AsyncGenerator.prototype.return = function (arg) {
-    return this._invoke("return", arg);
-  };
-
-  return {
-    wrap: function (fn) {
-      return function () {
-        return new AsyncGenerator(fn.apply(this, arguments));
-      };
-    },
-    await: function (value) {
-      return new AwaitValue(value);
-    }
-  };
-}();
 
 
 
@@ -9966,17 +9844,17 @@ function material(textureDescription, options) {
     roughness: 0.5,
     metalness: 0,
     color: 0xffffff,
-    fog: true,
+    useFog: true,
     unshaded: false,
     wireframe: false,
     side: FrontSide
   }, options);
 
-  var materialDescription = "Primrose.material(" + textureDescription + ", " + options.color + ", " + options.unshaded + ", " + options.side + ", " + options.opacity + ", " + options.roughness + ", " + options.metalness + ", " + options.color + ", " + options.emissive + ", " + options.wireframe + ", " + options.fog + ")";
+  var materialDescription = "Primrose.material(" + textureDescription + ", " + options.color + ", " + options.unshaded + ", " + options.side + ", " + options.opacity + ", " + options.roughness + ", " + options.metalness + ", " + options.color + ", " + options.emissive + ", " + options.wireframe + ", " + options.useFog + ")";
 
   return cache(materialDescription, function () {
     var materialOptions = {
-      fog: options.fog,
+      fog: options.useFog,
       transparent: options.transparent || options.opacity !== undefined && options.opacity < 1,
       opacity: options.opacity,
       side: options.side || FrontSide
@@ -15668,6 +15546,48 @@ var ButtonFactory = function () {
   return ButtonFactory;
 }();
 
+function axis(length, width) {
+  var center = hub();
+  put(brick(0xff0000, length, width, width)).on(center);
+  put(brick(0x00ff00, width, length, width)).on(center);
+  put(brick(0x0000ff, width, width, length)).on(center);
+  return center;
+}
+
+function camera(index, options) {
+  options = Object.assign({
+    width: 1,
+    height: 768 / 1280,
+    disableVideoCopying: false,
+    unshaded: true,
+    transparent: true,
+    opacity: 0.5
+  }, options);
+  var cam = hub();
+  cam.ready = navigator.mediaDevices.enumerateDevices().catch(console.error.bind(console, "ERR [enumerating devices]:>")).then(function (devices) {
+    return devices.filter(function (d) {
+      return d.kind === "videoinput";
+    })[index];
+  }).catch(console.error.bind(console, "ERR [filtering devices]:>")).then(function (device) {
+    return navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: device.deviceId,
+        width: { ideal: 1280 },
+        height: { ideal: 768 }
+      }
+    });
+  }).catch(console.error.bind(console, "ERR [getting media access]:>")).then(function (stream) {
+    return new Image(options).loadVideos([stream]);
+  }).catch(console.error.bind(console, "ERR [creating image]:>")).then(function (image) {
+    image._meshes.forEach(function (mesh) {
+      return cam.add(mesh);
+    });
+    cam.image = image;
+    return cam;
+  });
+  return cam;
+}
+
 /**
  * @author mrdoob / http://mrdoob.com/
  * @author alteredq / http://alteredqualia.com/
@@ -15841,6 +15761,20 @@ Points.prototype = Object.assign(Object.create(Object3D.prototype), {
 	}
 
 });
+
+function cloud(verts, c, s) {
+  var geom = new Geometry();
+  for (var i = 0; i < verts.length; ++i) {
+    geom.vertices.push(verts[i]);
+  }
+  var mat = cache("PointsMaterial(" + c + ", " + s + ")", function () {
+    return new PointsMaterial({
+      color: c,
+      size: s
+    });
+  });
+  return new Points(geom, mat);
+}
 
 /**
  * @author Mugen87 / https://github.com/Mugen87
@@ -16142,6 +16076,21 @@ function CylinderBufferGeometry(radiusTop, radiusBottom, height, radialSegments,
 CylinderBufferGeometry.prototype = Object.create(BufferGeometry.prototype);
 CylinderBufferGeometry.prototype.constructor = CylinderBufferGeometry;
 
+function cylinder(rT, rB, height, rS, hS, openEnded, thetaStart, thetaEnd) {
+  if (rT === undefined) {
+    rT = 0.5;
+  }
+  if (rB === undefined) {
+    rB = 0.5;
+  }
+  if (height === undefined) {
+    height = 1;
+  }
+  return cache("CylinderBufferGeometry(" + rT + ", " + rB + ", " + height + ", " + rS + ", " + hS + ", " + openEnded + ", " + thetaStart + ", " + thetaEnd + ")", function () {
+    return new CylinderBufferGeometry(rT, rB, height, rS, hS, openEnded, thetaStart, thetaEnd);
+  });
+}
+
 function fixGeometry(geometry, options) {
   options = options || {};
   var maxU = options.maxU || 1,
@@ -16286,6 +16235,31 @@ function quad$1(width, height, options) {
   });
 }
 
+function range(n, m, s, t) {
+  var n2 = s && n || 0,
+      m2 = s && m || n,
+      s2 = t && s || 1;
+  var t2 = t || s || m,
+      output = null;
+
+  if (!(t2 instanceof Function)) {
+    t2 = identity$1;
+  }
+
+  for (var i = n2; i < m2; i += s2) {
+    var value = t2(i);
+    if (output === null && value !== undefined) {
+      output = [];
+    }
+    if (output !== null) {
+      output.push(value);
+    }
+  }
+  if (output !== null) {
+    return output;
+  }
+}
+
 var InsideSphereGeometry = function (_Geometry) {
   inherits(InsideSphereGeometry, _Geometry);
 
@@ -16421,6 +16395,61 @@ function shell$1(r, slices, rings, phi, theta, options) {
     return fixGeometry(new InsideSphereGeometry(r, slices, rings, phiStart, phi, thetaStart, theta, true), options);
   });
 }
+
+function raycaster() {
+  return new Raycaster();
+}
+
+function v3(x, y, z) {
+  return new Vector3(x, y, z);
+}
+
+var index$1 = {
+  axis: axis,
+  box: box,
+  brick: brick,
+  camera: camera,
+  circle: circle,
+  cloud: cloud,
+  colored: colored,
+  cylinder: cylinder,
+  hub: hub,
+  light: light,
+  material: material,
+  put: put,
+  quad: quad$1,
+  range: range,
+  ring: ring,
+  shell: shell$1,
+  raycaster: raycaster,
+  sphere: sphere$1,
+  textured: textured,
+  v3: v3
+};
+
+var liveAPI = Object.freeze({
+	axis: axis,
+	box: box,
+	brick: brick,
+	camera: camera,
+	circle: circle,
+	cloud: cloud,
+	colored: colored,
+	cylinder: cylinder,
+	hub: hub,
+	light: light,
+	material: material,
+	put: put,
+	quad: quad$1,
+	range: range,
+	ring: ring,
+	shell: shell$1,
+	raycaster: raycaster,
+	sphere: sphere$1,
+	textured: textured,
+	v3: v3,
+	default: index$1
+});
 
 var index$2 = typeof Symbol === 'undefined' ? function (description) {
 	return '@' + (description || '@') + Math.random();
@@ -16930,6 +16959,9 @@ var Image = function (_Entity) {
             }
           } else if (spec instanceof HTMLVideoElement) {
             video = spec;
+          } else if (spec.toString() === "[object MediaStream]" || spec.toString() === "[object LocalMediaStream]") {
+            video = document.createElement("video");
+            video.srcObject = spec;
           }
           video.onprogress = progress;
           video.onloadedmetadata = progress;
@@ -31122,13 +31154,6 @@ var InputProcessor = function (_AbstractEventEmitter) {
   return InputProcessor;
 }(AbstractEventEmitter);
 
-function setCursorCommand(obj, mod, key, func, cur) {
-  var name = mod + "_" + key;
-  obj[name] = function (prim, tokenRows) {
-    prim["cursor" + func](tokenRows, prim[cur + "Cursor"]);
-  };
-}
-
 var OperatingSystem = function () {
   function OperatingSystem(osName, pre1, pre2, redo, pre3, home, end, pre5) {
     classCallCheck(this, OperatingSystem);
@@ -32811,119 +32836,6 @@ Util.frameDataFromPose = function () {
     updateEyeMatrices(frameData.rightProjectionMatrix, frameData.rightViewMatrix, pose, vrDisplay.getEyeParameters("right"), vrDisplay);
 
     return true;
-  };
-}();
-
-var asyncGenerator$1 = function () {
-  function AwaitValue(value) {
-    this.value = value;
-  }
-
-  function AsyncGenerator(gen) {
-    var front, back;
-
-    function send(key, arg) {
-      return new Promise(function (resolve, reject) {
-        var request = {
-          key: key,
-          arg: arg,
-          resolve: resolve,
-          reject: reject,
-          next: null
-        };
-
-        if (back) {
-          back = back.next = request;
-        } else {
-          front = back = request;
-          resume(key, arg);
-        }
-      });
-    }
-
-    function resume(key, arg) {
-      try {
-        var result = gen[key](arg);
-        var value = result.value;
-
-        if (value instanceof AwaitValue) {
-          Promise.resolve(value.value).then(function (arg) {
-            resume("next", arg);
-          }, function (arg) {
-            resume("throw", arg);
-          });
-        } else {
-          settle(result.done ? "return" : "normal", result.value);
-        }
-      } catch (err) {
-        settle("throw", err);
-      }
-    }
-
-    function settle(type, value) {
-      switch (type) {
-        case "return":
-          front.resolve({
-            value: value,
-            done: true
-          });
-          break;
-
-        case "throw":
-          front.reject(value);
-          break;
-
-        default:
-          front.resolve({
-            value: value,
-            done: false
-          });
-          break;
-      }
-
-      front = front.next;
-
-      if (front) {
-        resume(front.key, front.arg);
-      } else {
-        back = null;
-      }
-    }
-
-    this._invoke = send;
-
-    if (typeof gen.return !== "function") {
-      this.return = undefined;
-    }
-  }
-
-  if (typeof Symbol === "function" && Symbol.asyncIterator) {
-    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-      return this;
-    };
-  }
-
-  AsyncGenerator.prototype.next = function (arg) {
-    return this._invoke("next", arg);
-  };
-
-  AsyncGenerator.prototype.throw = function (arg) {
-    return this._invoke("throw", arg);
-  };
-
-  AsyncGenerator.prototype.return = function (arg) {
-    return this._invoke("return", arg);
-  };
-
-  return {
-    wrap: function wrap(fn) {
-      return function () {
-        return new AsyncGenerator(fn.apply(this, arguments));
-      };
-    },
-    await: function await(value) {
-      return new AwaitValue(value);
-    }
   };
 }();
 
@@ -35082,7 +34994,7 @@ var FPSInput = function (_AbstractEventEmitter) {
               },
               zero: {
                 buttons: [Gamepad.VIVE_BUTTONS.GRIP_PRESSED],
-                commandUp: emit.bind(_this, "zero")
+                commandUp: _this.emit.bind(_this, "zero")
               }
             });
 
@@ -35382,6 +35294,17 @@ var FPSInput = function (_AbstractEventEmitter) {
   }]);
   return FPSInput;
 }(AbstractEventEmitter);
+
+function number(min, max, power) {
+  power = power || 1;
+  if (max === undefined) {
+    max = min;
+    min = 0;
+  }
+  var delta = max - min,
+      n = Math.pow(Math.random(), power);
+  return min + n * delta;
+}
 
 function int(min, max, power) {
   return Math.floor(number(min, max, power));
@@ -43472,8 +43395,8 @@ var BrowserEnvironment = function (_AbstractEventEmitter) {
           canvasHeight = Math.max(canvasHeight, p[i].viewport.height);
         }
 
-        _this.input.Mouse.commands.U.scale = 2 / canvasWidth;
-        _this.input.Mouse.commands.V.scale = 2 / canvasHeight;
+        _this.input.Mouse.commands.U.scale = devicePixelRatio * 2 / canvasWidth;
+        _this.input.Mouse.commands.V.scale = devicePixelRatio * 2 / canvasHeight;
 
         canvasWidth = Math.floor(canvasWidth * resolutionScale);
         canvasHeight = Math.floor(canvasHeight * resolutionScale);
@@ -43776,7 +43699,7 @@ var BrowserEnvironment = function (_AbstractEventEmitter) {
 
         _this.sky = skyFunc(skyGeom, _this.options.skyTexture, {
           side: BackSide,
-          fog: false,
+          useFog: false,
           unshaded: true,
           transparent: true,
           opacity: 1,
@@ -43882,7 +43805,7 @@ var BrowserEnvironment = function (_AbstractEventEmitter) {
       if (evt !== "Gaze") {
         var _ret = function () {
           var elem = null;
-          if (_this.input.VR.canMirror || _this.input.VR.isNativeMobileWebVR) {
+          if (evt === "force" || _this.input.VR.canMirror || _this.input.VR.isNativeMobileWebVR) {
             elem = _this.renderer.domElement;
           } else {
             elem = _this.options.fullScreenElement;
@@ -43990,7 +43913,7 @@ var BrowserEnvironment = function (_AbstractEventEmitter) {
 
       _this.fader = colored(box(1, 1, 1), _this.options.backgroundColor, {
         opacity: 0,
-        fog: false,
+        useFog: false,
         transparent: true,
         unshaded: true,
         side: BackSide
@@ -44094,11 +44017,7 @@ var BrowserEnvironment = function (_AbstractEventEmitter) {
 
       _this.input.head.add(_this.camera);
 
-      return _this.input.ready.then(function () {
-        if (_this.options.fullScreenButtonContainer) {
-          _this.insertFullScreenButtons(_this.options.fullScreenButtonContainer);
-        }
-      });
+      return _this.input.ready;
     });
 
     var allReady = Promise.all([skyReady, groundReady, modelsReady, documentReady]).then(function () {
@@ -44113,11 +44032,17 @@ var BrowserEnvironment = function (_AbstractEventEmitter) {
           _this.ground.castShadow = true;
         }
       }
+
       _this.input.VR.displays.forEach(function (display) {
         if (display.DOMElement !== undefined) {
           display.DOMElement = _this.renderer.domElement;
         }
       });
+
+      if (_this.options.fullScreenButtonContainer) {
+        _this.insertFullScreenButtons(_this.options.fullScreenButtonContainer);
+      }
+
       _this.input.VR.connect(0);
 
       _this.emit("ready");
@@ -44327,37 +44252,18 @@ BrowserEnvironment.DEFAULTS = {
   disableAdvertising: false
 };
 
-var dim = 100;
-var hDim = dim / 2;
-var rand = function rand() {
-  return number(0, dim);
-};
-var randDegree = function randDegree() {
-  return number(-Math.PI, Math.PI);
-};
+Object.assign(window, liveAPI);
+
 var env = new BrowserEnvironment({
-  backgroundColor: 0x000000,
-  groundTexture: "../images/deck.png",
-  useFog: true,
-  drawDistance: hDim + 1,
-  fullScreenButtonContainer: "#fullScreenButtonContainer"
+    backgroundColor: 0x000000,
+    groundTexture: "../images/deck.png",
+    useFog: true,
+    drawDistance: 100,
+    fullScreenButtonContainer: "#fullScreenButtonContainer"
 });
 
-env.addEventListener("ready", function () {
-  ModelLoader.loadModel("../models/cardboard.obj").then(buildScene);
-});
+env.addEventListener("ready", function () {});
 
-function buildScene(gc) {
-  for (var i = 0; i < 100; ++i) {
-    var m = gc.clone();
-    m.position.set(rand() - hDim, rand() / 2, rand() - hDim);
-    m.rotation.set(randDegree(), randDegree(), randDegree());
-    env.scene.add(m);
-  }
-}
-
-exports.env = env;
-
-Object.defineProperty(exports, '__esModule', { value: true });
+env.addEventListener("update", function () {});
 
 })));
