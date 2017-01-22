@@ -21,9 +21,10 @@ var height = 8,
       font: "../fonts/helvetiker_regular.typeface.json",
       backgroundColor: 0x000000,
       useFog: true,
-      useGaze: isMobile,
+      useGaze: true,
       drawDistance: 10,
-      fullScreenButtonContainer: "#fullScreenButtonContainer"
+      fullScreenButtonContainer: "#fullScreenButtonContainer",
+      progress: Preloader.thunk
     });
 
 function text(size, text) {
@@ -33,13 +34,12 @@ function text(size, text) {
 
 function Board(type){
   this.object = hub();
-  this.title = put(text3D(0.15, type)
+  this.title = text3D(0.15, type)
       .center()
       .colored(colorPlay)
-      .named("text" + type))
-    .on(this.object)
-    .at(0, 0.7, -1.3)
-    .obj();
+      .addTo(this.object)
+      .named("text" + type)
+      .at(0, 0.7, -1.3);
   this.btns = [];
   this.btnState = [];
   this.type = type;
@@ -52,13 +52,14 @@ function Board(type){
         .colored(colorOff)
         .named("btn" + i)
         .latLon(lat, lon);
-    put(box(padSize * 1.1, padSize * 1.1, padDepth * 0.9)
-        .colored(colorPlay)
-        .named("bevel" + i))
-      .on(btn);
-    env.registerPickableObject(btn);
-    btn.onselect = this.select.bind(this, i);
-    btn.onenter = this.play.bind(this, i, 0);
+
+    box(padSize * 1.1, padSize * 1.1, padDepth * 0.9)
+      .colored(colorPlay)
+      .named("bevel" + i)
+      .addTo(btn);
+
+    btn.addEventListener("select", this.select.bind(this, i));
+    btn.addEventListener("enter", this.play.bind(this, i, 0));
     this.object.add(btn);
     this.btns.push(btn);
   }.bind(this));
@@ -76,9 +77,9 @@ Board.prototype.play = function(i, dt) {
 
 Board.prototype.update = function() {
   if(measure !== lastMeasure){
-    const time = env.audio.context.currentTime,
-          measureTime = perMeasure * Math.ceil(time / perMeasure),
-          dt = measureTime - time;
+    var time = env.audio.context.currentTime,
+      measureTime = perMeasure * Math.ceil(time / perMeasure),
+      dt = measureTime - time;
     for(var y = 0; y < width; ++y){
       var i = y * height + measure;
       if(this.btnState[i]){
@@ -105,7 +106,8 @@ Board.prototype.select = function(i, evt) {
 };
 
 env.addEventListener("ready", function () {
-  const types = Primrose.Audio.Music.TYPES,
+
+  var types = Primrose.Audio.Music.TYPES,
     nTypes = types.length;
   types.forEach(function(type, t) {
     var board = new Board(type);
@@ -113,19 +115,25 @@ env.addEventListener("ready", function () {
     env.scene.add(board.object);
     board.object.latLon(0, (t - (nTypes - 1) / 2) * 100 / nTypes);
   });
+
+  Preloader.hide();
 });
 
-env.addEventListener("update", function(dt){
+env.addEventListener("update", function(){
   if(!skipOne){
-    t += dt;
+    t += env.deltaTime;
     if(t > perMeasure){
       t -= perMeasure;
       measure = (measure + 1) % height;
     }
-    boards.forEach((board) => board.update());
+    boards.forEach(function (board) {
+      board.update();
+    });
     lastMeasure = measure;
   }
   skipOne = false;
 });
 
-window.addEventListener("focus", () =>  skipOne = true);
+window.addEventListener("focus", function() {
+  skipOne = true;
+});

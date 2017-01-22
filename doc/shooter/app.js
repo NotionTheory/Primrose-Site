@@ -7,7 +7,8 @@ var cube = range(6, function(i) { return "../images/space" + i + ".jpg"; }),
     gazeLength: 0.25,
     showHeadPointer: isMobile,
     ambientSound: "../audio/space.ogg",
-    fullScreenButtonContainer: "#fullScreenButtonContainer"
+    fullScreenButtonContainer: "#fullScreenButtonContainer",
+    progress: Preloader.thunk
   }),
   blocks = [],
   shots = [],
@@ -61,10 +62,12 @@ env.addEventListener("ready", function(){
     env.options.fullScreenElement.addEventListener("keydown", fixAudio);
   }
   env.insertFullScreenButtons("body");
-  Promise.all(range(10, () => new Primrose.Audio.Sound(env.audio, "../audio/exp.ogg").ready))
+  Promise.all(range(10, function() {
+    return new Primrose.Audio.Sound(env.audio, "../audio/exp.ogg").ready;
+  }))
     .then(function(snds) {
       sounds = snds;
-      range(10, () => {
+      range(10, function(){
         var b = asteroid[0].clone();
         b.nextSize = 1;
         b.position.copy(Primrose.Random.vector(-15, 15));
@@ -72,6 +75,8 @@ env.addEventListener("ready", function(){
         blocks.push(b);
         env.scene.add(b);
       });
+
+      Preloader.hide();
     });
 });
 
@@ -88,7 +93,8 @@ function updateObj(obj, dt) {
   }
 };
 
-env.addEventListener("update", function(dt){
+env.addEventListener("update", function(){
+  const dt = env.deltaTime;
   for(var i = 0; i < blocks.length; ++i){
     var block = blocks[i];
     TEMP.copy(env.input.head.position)
@@ -191,5 +197,4 @@ function shoot(evt){
     .off(0.51);
 }
 
-env.addEventListener("pointerend", shoot);
-env.addEventListener("gazecomplete", shoot);
+env.sky.addEventListener("select", shoot);

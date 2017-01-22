@@ -12,8 +12,7 @@
     .concat([
       "!../Primrose/**/*.pug",
       "!../Primrose/**/*.styl",
-      "!../Primrose/src/**/*",
-      "!../Primrose/StartHere*"
+      "!../Primrose/src/**/*"
     ]);
 
 primroseFiles.push("../Primrose/index.html");
