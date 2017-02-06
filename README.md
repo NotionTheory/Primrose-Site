@@ -1,132 +1,35 @@
 # Primrose
 
-Primrose is a WebVR framework that allows web developers to create virtual reality experiences for standard web browsers on desktop and mobile devices alike.
+Primrose is a WebVR framework that lets web developers create virtual reality experiences for standard web browsers on desktop and mobile devices alike.
 
 WebVR is an [experimental Javascript API](https://developer.mozilla.org/en-US/docs/Web/API/WebVR_API) that provides access to Virtual Reality devices and peripherals in the browser. See [WebVR.info](https://webvr.info/) for more information and resources.
 
 
 # Getting started with Primrose
 
-### Contributing
+## Contributing
 
-If you're interested in contributing to the framework, we'd love to have you involved. Please [read the guidelines](https://github.com/NotionTheory/Primrose/blob/master/CONTRIBUTING.md) for contributing before doing so.
+If you're interested in contributing to the framework, we'd love to have you involved. Primrose is open to contributors of all skill levels and we are ready and willing to help beginners work through issues. Please [read the guidelines](https://github.com/NotionTheory/Primrose/blob/master/CONTRIBUTING.md) for contributing before doing so.
 
-### Project Setup
+If you don't want to write code or you don't have a lot of spare time, you still can help! Testing the various demos to make sure we haven't broken any features and filing issues when we do is very important.
 
-You first want to setup a new project using `npm init`, and then follow the prompts.
+Our GitHub contributors so far:
 
-Once you have created your new project, install Primrose using the following command: `npm install --save primrose`
+https://github.com/NotionTheory/Primrose/contributors
+You can add your name to it! :)
 
-Next create a basic `index.html` file in your project directory and include the `node_modules/primrose/Primrose.min.js` script, like so:
-
-    grammar("HTML");
-    // index.html
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script type="text/javascript" src="node_modules/primrose/Primrose.min.js"></script>
-        <title>My Primrose VR Application</title>
-      <body>
-        <h2>hello world</h2>
-      </body>
-    </html>
-
-
-Then create an `app.js` script page that creates a new `Primrose.BrowserEnvironment`, like so:
-
-    grammar("JavaScript");
-    // app.js
-    "use strict";
-    var env = new Primrose.BrowserEnvironment({
-      autoScaleQuality: false,
-      skyTexture: "../images/bg.jpg",
-      groundTexture: "../images/deck.png",
-      font: "../fonts/helvetiker_regular.typeface.json"
-    });
-
-    env.addEventListener("ready", function () {
-      // Perform any post-initialization setup. Once this event fires, the Primrose
-      // framework is ready and will start animation as soon as this function returns.
-    });
-
-    env.addEventListener("update", function (dt) {
-      // Perform per-frame updates here, like moving objects around according to your
-      // own rules.
-    });
-
-
-Finally, to get our project up and running live in the browser, we need to set up a server. For the purposes of this basic demo, we're going to be using a [static HTML server](https://github.com/NotionTheory/notion-node) which can be included by running the command `npm install --save notion-node` (you can replace with Express or equivalent). Then make a `server.js` file and include the following:
-
-    grammar("JavaScript");
-    // server.js
-    var startServer = require("notion-node");
-    startServer();
-
-
-Run `node server.js --mode=dev` in your terminal to see your application live. If your browser doesn't automatically open, just navigate to [localhost](http://localhost/) and you should see your page.
-
-
-
-
-## Example
-
-    grammar("JavaScript");
-    // different operating systems have different keyboard shortcuts.
-    var modA = isOSX ? "metaKey" : "ctrlKey",
-        modB = isOSX ? "altKey" : "shiftKey",
-        execKey = isOSX ? "E" : "SPACE",
-
-        // a place to stow an object we will modify out of the loaded scene file
-        terminal = null,
-
-        // setup the VR environment
-        app = new Primrose.BrowserEnvironment({
-          sceneModel: "commodore_pet.json",
-          skyTexture: "images/bg2.jpg",
-          groundTexture: "images/deck.png"
-        });
-
-    function isExecuteCommand ( evt ) {
-      return evt[modA] && evt[modB] && evt.keyCode === Primrose.Keys[execKey];
-    }
-
-    app.addEventListener( "keydown", function ( evt ) {
-      if ( terminal.running &&
-          terminal.waitingForInput &&
-          evt.keyCode === Primrose.Keys.ENTER ) {
-        terminal.sendInput( evt );
-      }
-      else if ( !terminal.running &&
-          isExecuteCommand( evt ) ) {
-        terminal.execute();
-      }
-    } );
-
-    app.addEventListener( "ready", function () {
-
-      // A hack to reposition the objects in the scene because the model file is a little janky
-      app.scene.traverse( function ( obj ) {
-        if ( obj.name && obj.parent && obj.parent.uuid === app.scene.uuid ) {
-          obj.position.y += app.avatarHeight * 0.9;
-          obj.position.z -= 1;
-        }
-      } );
-
-      // the `convertToEditor` method makes an editor out of existing geometry.
-      var editor = app.convertToEditor( app.scene.Screen );
-      editor.padding = 10;
-      terminal = new Primrose.Text.Terminal( app.scene.Screen.textarea );
-      terminal.loadFile( "oregon.bas" );
-    } );
-
+The easiest way to get started is to check the issues list for issues with the `first-timers-only` label.
 
 ## Issues
-The issues list is available on [GitHub](https://github.com/NotionTheory/Primrose/issues)
 
-## Licensing
-Primrose is free, open source software (GPLv3) and may readily bewith other FOSS projects.
+Our [Issues List](https://github.com/NotionTheory/Primrose/issues) is here on GitHub. If you're a brand new developer, please take a look at our Issues List and find an issue labeled `first-timers-only`. These are introductory tasks that we have reserved that will gently guide you into getting the project setup on your machine and get used to working on the code base.
 
-## Contributions
-To simplify licensing issues, contributions to Primrose require a copyright assignment to me, Sean T. McBeth. Please include your name and email address in the CONTRIBUTORS.md file with your pull request. This will serve as your copyright assignment.
+<a href="http://www.firsttimersonly.com/"><img src="http://img.shields.io/badge/first--timers--only-friendly-blue.svg?style=flat-square" alt="first-timers-only"></a>
+
+## Project Setup
+
+To get started with Primrose, follow this <a href="https://github.com/NotionTheory/Primrose/wiki/Working-on-Primrose">setup guide</a>.
+
+# Licensing
+
+Primrose is free, open source software (GPLv3) and may readily be used with other FOSS projects.
