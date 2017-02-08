@@ -7579,7 +7579,7 @@ var ModelFactory = function () {
             }).then(function (materials) {
               materials.preload();
               Loader$$1.setMaterials(materials);
-            });
+            }).catch(console.error.bind(console, "Error loading MTL file: " + newPath));
           } else if (extension === ".mtl") {
             var match = src.match(PATH_PATTERN);
             if (match) {

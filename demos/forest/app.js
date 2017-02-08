@@ -1,6 +1,6 @@
 var env = new Primrose.BrowserEnvironment({
   font: "../shared_assets/fonts/helvetiker_regular.typeface.json",
-  backgroundColor: 0x07001f,
+  backgroundColor: 0xC9E6EE,
   groundTexture: "../shared_assets/images/grass.png",
   useFog: true,
   fullScreenButtonContainer: "#fullScreenButtonContainer",
@@ -13,12 +13,21 @@ env.addEventListener("ready", function() {
   treeReady.then(function(treeModel) {
     for(var i = 0; i < 100; ++i) {
       treeModel.clone()
+        .textured("Tree Bake Tex.jpg")
         .named("tree" + i)
         .addTo(env.scene)
         .at(
           Primrose.Random.number(-25, 25),
           0,
-          Primrose.Random.number(-25, 25));
+          Primrose.Random.number(-25, 25))
+        .rot(
+          0,
+          Primrose.Random.number(0, Math.PI),
+          0)
+        .scl(
+          1,
+          Primrose.Random.number(0.7, 1.3),
+          1);
     }
     Preloader.hide();
   });
