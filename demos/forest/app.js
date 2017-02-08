@@ -3,6 +3,7 @@ var env = new Primrose.BrowserEnvironment({
   backgroundColor: 0xC9E6EE,
   groundTexture: "../shared_assets/images/grass.png",
   useFog: true,
+  enableShadows: true,
   fullScreenButtonContainer: "#fullScreenButtonContainer",
   progress: Preloader.thunk
 });
@@ -11,9 +12,10 @@ var treeReady = Primrose.Graphics.ModelFactory.loadModel("tree.obj");
 
 env.addEventListener("ready", function() {
   treeReady.then(function(treeModel) {
+    treeModel.template.castShadow = true;
+    treeModel.template.receiveShadow = true;
     for(var i = 0; i < 100; ++i) {
       treeModel.clone()
-        .textured("Tree Bake Tex.jpg")
         .named("tree" + i)
         .addTo(env.scene)
         .at(
