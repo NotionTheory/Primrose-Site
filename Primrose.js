@@ -8,7 +8,7 @@ var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
 
 var isChrome = !!window.chrome && !isOpera;
 
-var isFirefox = typeof window.InstallTrigger !== "undefined";
+var isFirefox$1 = typeof window.InstallTrigger !== "undefined";
 
 var isGearVR = navigator.userAgent.indexOf("Mobile VR") > -1;
 
@@ -39,7 +39,7 @@ var isWindows = /Windows/.test(navigator.userAgent || "");
 
 var index$1 = {
   isChrome: isChrome,
-  isFirefox: isFirefox,
+  isFirefox: isFirefox$1,
   isGearVR: isGearVR,
   isIE: isIE,
   isInIFrame: isInIFrame,
@@ -55,7 +55,7 @@ var index$1 = {
 
 var flags = Object.freeze({
 	isChrome: isChrome,
-	isFirefox: isFirefox,
+	isFirefox: isFirefox$1,
 	isGearVR: isGearVR,
 	isIE: isIE,
 	isInIFrame: isInIFrame,
@@ -205,20 +205,7 @@ var createClass = function () {
 
 
 
-var defineProperty = function (obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
 
-  return obj;
-};
 
 var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
@@ -1227,6 +1214,7 @@ function immutable(value) {
   };
   return {
     enumerable: true,
+    configurable: true,
     get: getter,
     set: function set() {
       throw new Error("This value is immutable and may only be read, not written.");
@@ -1245,6 +1233,7 @@ function mutable(value, type) {
   if (!type) {
     return {
       enumerable: true,
+      configurable: true,
       get: function get() {
         return value;
       },
@@ -1255,6 +1244,7 @@ function mutable(value, type) {
   } else if (typeof type === "function") {
     return {
       enumerable: true,
+      configurable: true,
       get: function get() {
         return value;
       },
@@ -1268,6 +1258,7 @@ function mutable(value, type) {
   } else {
     return {
       enumerable: true,
+      configurable: true,
       get: function get() {
         return value;
       },
@@ -3463,8 +3454,6 @@ var Audio3D = function () {
       } catch (exp) {
         reject(exp);
       }
-    }).then(function () {
-      return console.log("Audio ready");
     });
   }
 
@@ -5426,55 +5415,289 @@ ButtonFactory.DEFAULT = new ButtonFactory(colored(box$1(1, 1, 1), 0xff0000), {
   toggle: true
 });
 
+// The JSON format object loader is not always included in the Three.js distribution,
+// so we have to first check for it.
+var loaders = null;
+var PATH_PATTERN = /((?:https?:\/\/)?(?:[^/]+\/)+)(\w+)(\.(?:\w+))$/;
+var EXTENSION_PATTERN = /(\.(?:\w+))+$/;
+
+function loader(map, key) {
+  return function (obj) {
+    return ModelFactory.loadObject(map[key]).then(function (model) {
+      obj[key] = model;
+      return obj;
+    });
+  };
+}
+
+// Sometimes, the properties that export out of Blender and into Three.js don't
+// come out correctly, so we need to do a correction.
+function fixJSONScene(json) {
+  json.traverse(function (obj) {
+    if (obj.geometry) {
+      obj.geometry.computeBoundingSphere();
+      obj.geometry.computeBoundingBox();
+    }
+  });
+  return json;
+}
+
+function fixOBJScene(group) {
+  if (group.type === "Group" && group.children.length === 1 && group.children[0].isMesh) {
+    return group.children[0];
+  }
+  return group;
+}
+
+var propertyTests = {
+  isButton: function isButton(obj) {
+    return obj.material && obj.material.name.match(/^button\d+$/);
+  },
+  isSolid: function isSolid(obj) {
+    return !obj.name.match(/^(water|sky)/);
+  },
+  isGround: function isGround(obj) {
+    return obj.material && obj.material.name && obj.material.name.match(/\bground\b/);
+  }
+};
+
+function setProperties(object) {
+  object.traverse(function (obj) {
+    if (obj.isMesh) {
+      for (var prop in propertyTests) {
+        obj[prop] = obj[prop] || propertyTests[prop](obj);
+      }
+    }
+  });
+  return object;
+}
+
+var ModelFactory = function () {
+  createClass(ModelFactory, null, [{
+    key: "loadModel",
+    value: function loadModel(src, type, progress) {
+      return ModelFactory.loadObject(src, type, progress).then(function (scene) {
+        while (scene && scene.type === "Group") {
+          scene = scene.children[0];
+        }
+        return new ModelFactory(scene);
+      });
+    }
+  }, {
+    key: "loadObject",
+    value: function loadObject(src, type, progress) {
+
+      var extMatch = src.match(EXTENSION_PATTERN),
+          extension = type && "." + type || extMatch[0];
+      if (!extension) {
+        return Promise.reject("File path `" + src + "` does not have a file extension, and a type was not provided as a parameter, so we can't determine the type.");
+      } else {
+        extension = extension.toLowerCase();
+        if (loaders === null) {
+          loaders = {
+            ".json": three.ObjectLoader,
+            ".mtl": MTLLoader,
+            ".obj": OBJLoader,
+            ".typeface.json": three.FontLoader
+          };
+        }
+        var LoaderType = loaders[extension];
+        if (!LoaderType) {
+          return Promise.reject("There is no loader type for the file extension: " + extension);
+        } else {
+          var loader = new LoaderType(),
+              name = src.substring(0, extMatch.index),
+              elemID = name + "_" + extension.toLowerCase(),
+              elem = document.getElementById(elemID),
+              promise = Promise.resolve();
+          if (extension === ".obj") {
+            var newPath = src.replace(EXTENSION_PATTERN, ".mtl");
+            promise = promise.then(function () {
+              return ModelFactory.loadObject(newPath, "mtl", progress);
+            }).then(function (materials) {
+              materials.preload();
+              loader.setMaterials(materials);
+            }).catch(console.error.bind(console, "Error loading MTL file: " + newPath));
+          } else if (extension === ".mtl") {
+            var match = src.match(PATH_PATTERN);
+            if (match) {
+              var dir = match[1];
+              src = match[2] + match[3];
+              loader.setTexturePath(dir);
+              loader.setPath(dir);
+            }
+          }
+
+          if (elem) {
+            var elemSource = elem.innerHTML.split(/\r?\n/g).map(function (s) {
+              return s.trim();
+            }).join("\n");
+            promise = promise.then(function () {
+              return loader.parse(elemSource);
+            });
+          } else {
+            if (loader.setCrossOrigin) {
+              loader.setCrossOrigin("anonymous");
+            }
+            promise = promise.then(function () {
+              return new Promise(function (resolve, reject) {
+                return loader.load(src, resolve, progress, reject);
+              });
+            });
+          }
+
+          if (extension === ".obj") {
+            promise = promise.then(fixOBJScene);
+          }
+
+          if (extension === ".json") {
+            promise = promise.then(fixJSONScene);
+          }
+
+          if (extension !== ".mtl" && extension !== ".typeface.json") {
+            promise = promise.then(setProperties);
+          }
+          promise = promise.catch(console.error.bind(console, "MODEL_ERR", src));
+          return promise;
+        }
+      }
+    }
+  }, {
+    key: "loadObjects",
+    value: function loadObjects(map) {
+
+      var output = {},
+          promise = Promise.resolve(output);
+      for (var key in map) {
+        if (map[key]) {
+          promise = promise.then(loader(map, key));
+        }
+      }
+      return promise;
+    }
+  }]);
+
+  function ModelFactory(template) {
+    classCallCheck(this, ModelFactory);
+
+    this.template = template;
+  }
+
+  createClass(ModelFactory, [{
+    key: "clone",
+    value: function clone() {
+      var _this = this;
+
+      var obj = this.template.clone();
+
+      obj.traverse(function (child) {
+        if (child.isSkinnedMesh) {
+          obj.animation = new three.AnimationClip(child, child.geometry.animation);
+          if (!_this.template.originalAnimationClipData && obj.animation.data) {
+            _this.template.originalAnimationClipData = obj.animation.data;
+          }
+          if (!obj.animation.data) {
+            obj.animation.data = _this.template.originalAnimationClipData;
+          }
+        }
+      });
+
+      setProperties(obj);
+      return obj;
+    }
+  }]);
+  return ModelFactory;
+}();
+
+var heightTester = new three.Raycaster();
+
+heightTester.ray.direction.set(0, -1, 0);
+
 var Ground = function (_Entity) {
   inherits(Ground, _Entity);
 
   function Ground(options) {
     classCallCheck(this, Ground);
-
-    var _this = possibleConstructorReturn(this, (Ground.__proto__ || Object.getPrototypeOf(Ground)).call(this, "Ground", {
+    return possibleConstructorReturn(this, (Ground.__proto__ || Object.getPrototypeOf(Ground)).call(this, "Ground", {
       transparent: false,
       dim: options.drawDistance,
       texture: options.groundTexture,
+      model: options.groundModel,
       shadow: options.enableShadows,
       progress: options.progress
     }));
-
-    _this._image = null;
-
-    _this.ready = _this.ready.then(function () {
-      _this.children.forEach(function (mesh) {
-        return mesh.rot(-Math.PI / 2, 0, 0);
-      });
-    });
-    return _this;
   }
 
   createClass(Ground, [{
+    key: "moveTo",
+    value: function moveTo(pos) {
+      if (this.isInfinite) {
+        this.position.set(Math.floor(pos.x), 0, Math.floor(pos.z));
+      }
+    }
+  }, {
+    key: "getHeightAt",
+    value: function getHeightAt(pos) {
+      if (this.model) {
+        heightTester.ray.origin.copy(pos);
+        heightTester.ray.origin.y = 100;
+        var hits = heightTester.intersectObject(this.model);
+        if (hits.length > 0) {
+          var hit = hits[0];
+          return 100 - hit.distance;
+        }
+      }
+    }
+  }, {
     key: "_ready",
     get: function get() {
+      var _this2 = this;
+
       var dim = this.options.dim,
           type = _typeof(this.options.texture);
 
-      if (type === "number") {
-        this._image = quad(dim, dim).colored(this.options.texture, this.options);
-      } else if (type === "string") {
-        this._image = new Image(this.options.texture, Object.assign({}, this.options, {
-          width: dim,
-          height: dim,
-          txtRepeatX: dim,
-          txtRepeatY: dim,
-          anisotropy: 8
-        }));
+      var promise = null;
+
+      this.model = null;
+      this.isInfinite = null;
+
+      if (this.options.model) {
+        promise = ModelFactory.loadObject(this.options.model).then(function (model) {
+          _this2.model = model;
+          _this2.isInfinite = false;
+        });
+      } else {
+        if (type === "number") {
+          this.model = quad(dim, dim).colored(this.options.texture, this.options).rot(-Math.PI / 2, 0, 0);
+          promise = Promise.resolve();
+        } else if (type === "string") {
+          this.model = new Image(this.options.texture, Object.assign({}, this.options, {
+            width: dim,
+            height: dim,
+            txtRepeatX: dim,
+            txtRepeatY: dim,
+            anisotropy: 8
+          })).rot(-Math.PI / 2, 0, 0);
+          console.log("A", !!this.model);
+
+          promise = this.model.ready;
+        }
+
+        if (promise) {
+          this.isInfinite = true;
+        } else {
+          promise = Promise.reject("Couldn't figure out how to make the ground out of " + this.options.texture);
+        }
       }
 
-      if (this._image) {
-        this._image.named(this.name + "-" + this.options.texture).addTo(this);
+      promise = promise.then(function () {
+        _this2.model.receiveShadow = _this2.options.shadow;
+        _this2.model.named(_this2.name + "-" + (_this2.options.model || _this2.options.texture)).addTo(_this2);
 
-        this.watch(this._image, Pointer.EVENTS);
-      }
+        _this2.watch(_this2.model, Pointer.EVENTS);
+      });
 
-      return this._image && this._image.ready || get$1(Ground.prototype.__proto__ || Object.getPrototypeOf(Ground.prototype), "_ready", this);
+      return promise;
     }
   }]);
   return Ground;
@@ -5490,11 +5713,13 @@ var Sky = function (_Entity) {
       transparent: false,
       useFog: false,
       unshaded: true,
-      radius: options.drawDistance,
+      skyRadius: options.drawDistance,
       texture: options.skyTexture,
       progress: options.progress,
       enableShadows: options.enableShadows,
-      shadowMapSize: options.shadowMapSize
+      shadowMapSize: options.shadowMapSize,
+      shadowCameraSize: options.shadowCameraSize,
+      shadowRadius: options.shadowRadius
     }));
 
     _this._image = null;
@@ -5508,14 +5733,15 @@ var Sky = function (_Entity) {
 
       _this.sun = new three.DirectionalLight(0xffffff, 1).addTo(_this).at(0, 100, 100);
 
-      console.log(options.shadowMapSize, options.shadowCameraSize);
-      if (options.enableShadows) {
+      _this.add(_this.sun.target);
+
+      if (_this.options.enableShadows) {
         _this.sun.castShadow = true;
-        _this.sun.shadow.mapSize.width = _this.sun.shadow.mapSize.height = options.shadowMapSize * (isMobile ? 1 : 2);
+        _this.sun.shadow.mapSize.width = _this.sun.shadow.mapSize.height = _this.options.shadowMapSize;
         _this.sun.shadow.bias = 0.01;
-        _this.sun.shadow.radius = isMobile ? 1 : 3;
-        _this.sun.shadow.camera.top = _this.sun.shadow.camera.right = options.shadowCameraSize;
-        _this.sun.shadow.camera.bottom = _this.sun.shadow.camera.left = -options.shadowCameraSize;
+        _this.sun.shadow.radius = _this.options.shadowRadius;
+        _this.sun.shadow.camera.top = _this.sun.shadow.camera.right = _this.options.shadowCameraSize;
+        _this.sun.shadow.camera.bottom = _this.sun.shadow.camera.left = -_this.options.shadowCameraSize;
         _this.sun.shadow.camera.updateProjectionMatrix();
       }
     }
@@ -5523,13 +5749,6 @@ var Sky = function (_Entity) {
   }
 
   createClass(Sky, [{
-    key: "addTo",
-    value: function addTo(obj) {
-      var res = get$1(Sky.prototype.__proto__ || Object.getPrototypeOf(Sky.prototype), "addTo", this).call(this, obj);
-      obj.add(this.sun);
-      return res;
-    }
-  }, {
     key: "replace",
     value: function replace(files) {
       this.options.texture = files;
@@ -5541,7 +5760,7 @@ var Sky = function (_Entity) {
     get: function get() {
       var type = _typeof(this.options.texture);
       if (type === "number") {
-        var skyDim = this.options.radius / Math.sqrt(2);
+        var skyDim = this.options.skyRadius / Math.sqrt(2);
         this.options.side = three.BackSide;
         this.add(box(skyDim, skyDim, skyDim).colored(this.options.texture, this.options));
       } else if (type === "string" || this.options.texture instanceof Array && this.options.texture.length === 6 && typeof this.options.texture[0] === "string") {
@@ -6179,7 +6398,7 @@ var Grammar = function () {
 
 var JavaScript = new Grammar("JavaScript", [["newlines", /(?:\r\n|\r|\n)/], ["startBlockComments", /\/\*/], ["endBlockComments", /\*\//], ["regexes", /(?:^|,|;|\(|\[|\{)(?:\s*)(\/(?:\\\/|[^\n\/])+\/)/], ["stringDelim", /("|')/], ["startLineComments", /\/\/.*$/m], ["numbers", /-?(?:(?:\b\d*)?\.)?\b\d+\b/], ["keywords", /\b(?:break|case|catch|class|const|continue|debugger|default|delete|do|else|export|finally|for|function|if|import|in|instanceof|let|new|return|super|switch|this|throw|try|typeof|var|void|while|with)\b/], ["functions", /(\w+)(?:\s*\()/], ["members", /(\w+)\./], ["members", /((\w+\.)+)(\w+)/]]);
 
-var SCROLL_SCALE = isFirefox ? 3 : 100;
+var SCROLL_SCALE = isFirefox$1 ? 3 : 100;
 var COUNTER$5 = 0;
 var OFFSET = 0;
 
@@ -6205,7 +6424,7 @@ var TextBox = function (_Surface) {
     // normalize input parameters
     ////////////////////////////////////////////////////////////////////////
 
-    _this.useCaching = !isFirefox || !isMobile;
+    _this.useCaching = !isFirefox$1 || !isMobile;
 
     var makeCursorCommand = function makeCursorCommand(name) {
       var method = name.toLowerCase();
@@ -6247,7 +6466,7 @@ var TextBox = function (_Surface) {
 
     // different browsers have different sets of keycodes for less-frequently
     // used keys like curly brackets.
-    _this._browser = isChrome ? "CHROMIUM" : isFirefox ? "FIREFOX" : isIE ? "IE" : isOpera ? "OPERA" : isSafari ? "SAFARI" : "UNKNOWN";
+    _this._browser = isChrome ? "CHROMIUM" : isFirefox$1 ? "FIREFOX" : isIE ? "IE" : isOpera ? "OPERA" : isSafari ? "SAFARI" : "UNKNOWN";
     _this._pointer = new Point();
     _this._history = [];
     _this._historyFrame = -1;
@@ -7313,12 +7532,12 @@ var VRFrameData = function VRFrameData() {
 var nextDisplayId = 1000;
 
 var VRDisplay = function () {
-  function VRDisplay(name, isPolyfilled) {
+  function VRDisplay(name) {
     classCallCheck(this, VRDisplay);
 
     this._currentLayers = [];
 
-    Object.defineProperties(this, defineProperty({
+    Object.defineProperties(this, {
       capabilities: immutable(Object.defineProperties({}, {
         hasPosition: immutable(false),
         hasOrientation: immutable(isMobile),
@@ -7326,7 +7545,6 @@ var VRDisplay = function () {
         canPresent: immutable(true),
         maxLayers: immutable(1)
       })),
-      isPolyfilled: immutable(isPolyfilled),
       displayId: immutable(nextDisplayId++),
       displayName: immutable(name),
       isConnected: immutable(true),
@@ -7336,9 +7554,10 @@ var VRDisplay = function () {
       }),
 
       depthNear: mutable(0.01, "number"),
-      depthFar: mutable(10000.0, "number")
+      depthFar: mutable(10000.0, "number"),
 
-    }, "isPolyfilled", immutable(true)));
+      isPolyfilled: immutable(true)
+    });
 
     this._frameData = null;
     this._poseData = null;
@@ -7433,7 +7652,7 @@ var StandardMonitorVRDisplay = function (_VRDisplay) {
   function StandardMonitorVRDisplay(display) {
     classCallCheck(this, StandardMonitorVRDisplay);
 
-    var _this = possibleConstructorReturn(this, (StandardMonitorVRDisplay.__proto__ || Object.getPrototypeOf(StandardMonitorVRDisplay)).call(this, "Full Screen", display && display.isPolyfilled));
+    var _this = possibleConstructorReturn(this, (StandardMonitorVRDisplay.__proto__ || Object.getPrototypeOf(StandardMonitorVRDisplay)).call(this, "Full Screen"));
 
     _this._display = display;
     return _this;
@@ -7481,9 +7700,16 @@ var StandardMonitorVRDisplay = function (_VRDisplay) {
         var curLayer = this.getLayers()[0],
             elem = curLayer && curLayer.source || document.body,
             width = elem.clientWidth,
-            height = elem.clientHeight,
-            vFOV = defaultFieldOfView / 2,
-            hFOV = calcFoV(vFOV, width, height);
+            height = elem.clientHeight;
+
+        var vFOV = void 0,
+            hFOV = void 0;
+        if (height > width) {
+          vFOV = defaultFieldOfView, hFOV = calcFoV(vFOV, width, height);
+        } else {
+          hFOV = defaultFieldOfView, vFOV = calcFoV(hFOV, height, width);
+        }
+
         return {
           renderWidth: width * devicePixelRatio,
           renderHeight: height * devicePixelRatio,
@@ -7515,188 +7741,6 @@ function makeHidingContainer(id, obj) {
   elem.style.overflow = "hidden";
   elem.appendChild(obj);
   return elem;
-}
-
-// The JSON format object loader is not always included in the Three.js distribution,
-// so we have to first check for it.
-var loaders = null;
-var PATH_PATTERN = /((?:https?:\/\/)?(?:[^/]+\/)+)(\w+)(\.(?:\w+))$/;
-var EXTENSION_PATTERN = /(\.(?:\w+))+$/;
-
-// Sometimes, the properties that export out of Blender and into Three.js don't
-// come out correctly, so we need to do a correction.
-function fixJSONScene(json) {
-  json.traverse(function (obj) {
-    if (obj.geometry) {
-      obj.geometry.computeBoundingSphere();
-      obj.geometry.computeBoundingBox();
-    }
-  });
-  return json;
-}
-
-var propertyTests = {
-  isButton: function isButton(obj) {
-    return obj.material && obj.material.name.match(/^button\d+$/);
-  },
-  isSolid: function isSolid(obj) {
-    return !obj.name.match(/^(water|sky)/);
-  },
-  isGround: function isGround(obj) {
-    return obj.material && obj.material.name && obj.material.name.match(/\bground\b/);
-  }
-};
-
-function setProperties(object) {
-  object.traverse(function (obj) {
-    if (obj.isMesh) {
-      for (var prop in propertyTests) {
-        obj[prop] = obj[prop] || propertyTests[prop](obj);
-      }
-    }
-  });
-  return object;
-}
-
-var ModelFactory = function () {
-  createClass(ModelFactory, null, [{
-    key: "loadModel",
-    value: function loadModel(src, type, progress) {
-      return ModelFactory.loadObject(src, type, progress).then(function (scene) {
-        while (scene && scene.type === "Group") {
-          scene = scene.children[0];
-        }
-        return new ModelFactory(scene);
-      });
-    }
-  }, {
-    key: "loadObject",
-    value: function loadObject(src, type, progress) {
-
-      var extMatch = src.match(EXTENSION_PATTERN),
-          extension = type && "." + type || extMatch[0];
-      if (!extension) {
-        return Promise.reject("File path `" + src + "` does not have a file extension, and a type was not provided as a parameter, so we can't determine the type.");
-      } else {
-        extension = extension.toLowerCase();
-        if (loaders === null) {
-          loaders = {
-            ".json": three.ObjectLoader,
-            ".mtl": MTLLoader,
-            ".obj": OBJLoader,
-            ".typeface.json": three.FontLoader
-          };
-        }
-        var Loader$$1 = new loaders[extension]();
-        if (!Loader$$1) {
-          return Promise.reject("There is no loader type for the file extension: " + extension);
-        } else {
-          var name = src.substring(0, extMatch.index),
-              elemID = name + "_" + extension.toLowerCase(),
-              elem = document.getElementById(elemID),
-              promise = Promise.resolve();
-          if (extension === ".obj") {
-            var newPath = src.replace(EXTENSION_PATTERN, ".mtl");
-            promise = promise.then(function () {
-              return ModelFactory.loadObject(newPath, "mtl", progress);
-            }).then(function (materials) {
-              materials.preload();
-              Loader$$1.setMaterials(materials);
-            }).catch(console.error.bind(console, "Error loading MTL file: " + newPath));
-          } else if (extension === ".mtl") {
-            var match = src.match(PATH_PATTERN);
-            if (match) {
-              var dir = match[1];
-              src = match[2] + match[3];
-              Loader$$1.setTexturePath(dir);
-              Loader$$1.setPath(dir);
-            }
-          }
-
-          if (elem) {
-            var elemSource = elem.innerHTML.split(/\r?\n/g).map(function (s) {
-              return s.trim();
-            }).join("\n");
-            promise = promise.then(function () {
-              return Loader$$1.parse(elemSource);
-            });
-          } else {
-            if (Loader$$1.setCrossOrigin) {
-              Loader$$1.setCrossOrigin("anonymous");
-            }
-            promise = promise.then(function () {
-              return new Promise(function (resolve, reject) {
-                return Loader$$1.load(src, resolve, progress, reject);
-              });
-            });
-          }
-
-          if (extension === ".json") {
-            promise = promise.then(fixJSONScene);
-          }
-
-          if (extension !== ".mtl" && extension !== ".typeface.json") {
-            promise = promise.then(setProperties);
-          }
-          promise = promise.catch(console.error.bind(console, "MODEL_ERR", src));
-          return promise;
-        }
-      }
-    }
-  }, {
-    key: "loadObjects",
-    value: function loadObjects(map) {
-
-      var output = {},
-          promise = Promise.resolve(output);
-      for (var key in map) {
-        if (map[key]) {
-          promise = promise.then(loader(map, key));
-        }
-      }
-      return promise;
-    }
-  }]);
-
-  function ModelFactory(template) {
-    classCallCheck(this, ModelFactory);
-
-    this.template = template;
-  }
-
-  createClass(ModelFactory, [{
-    key: "clone",
-    value: function clone() {
-      var _this = this;
-
-      var obj = this.template.clone();
-
-      obj.traverse(function (child) {
-        if (child.isSkinnedMesh) {
-          obj.animation = new three.AnimationClip(child, child.geometry.animation);
-          if (!_this.template.originalAnimationClipData && obj.animation.data) {
-            _this.template.originalAnimationClipData = obj.animation.data;
-          }
-          if (!obj.animation.data) {
-            obj.animation.data = _this.template.originalAnimationClipData;
-          }
-        }
-      });
-
-      setProperties(obj);
-      return obj;
-    }
-  }]);
-  return ModelFactory;
-}();
-
-function loader(map, key) {
-  return function (obj) {
-    return ModelFactory.loadObject(map[key]).then(function (model) {
-      obj[key] = model;
-      return obj;
-    });
-  };
 }
 
 function initState() {
@@ -8791,7 +8835,7 @@ var Keyboard = function (_InputProcessor) {
     var _this = possibleConstructorReturn(this, (Keyboard.__proto__ || Object.getPrototypeOf(Keyboard)).call(this, "Keyboard", commands));
 
     _this._operatingSystem = null;
-    _this.browser = isChrome ? "CHROMIUM" : isFirefox ? "FIREFOX" : isIE ? "IE" : isOpera ? "OPERA" : isSafari ? "SAFARI" : "UNKNOWN";
+    _this.browser = isChrome ? "CHROMIUM" : isFirefox$1 ? "FIREFOX" : isIE ? "IE" : isOpera ? "OPERA" : isSafari ? "SAFARI" : "UNKNOWN";
     _this._codePage = null;
     _this.resetDeadKeyState = function () {
       return _this.codePage.resetDeadKeyState();
@@ -8993,8 +9037,6 @@ var PoseInputProcessor = function (_InputProcessor) {
   return PoseInputProcessor;
 }(InputProcessor);
 
-navigator.getGamepads = navigator.getGamepads || navigator.webkitGetGamepads;
-
 function playPattern(devices, pattern, pause) {
   if (pattern.length > 0) {
     var length = pattern.shift();
@@ -9051,6 +9093,16 @@ var Gamepad = function (_PoseInputProcessor) {
   }
 
   createClass(Gamepad, [{
+    key: "getImmediatePose",
+    value: function getImmediatePose() {
+      return this.currentPose;
+    }
+  }, {
+    key: "getPose",
+    value: function getPose() {
+      return this.currentPose;
+    }
+  }, {
     key: "checkDevice",
     value: function checkDevice(pad) {
       var i,
@@ -9152,12 +9204,16 @@ Gamepad.VIVE_BUTTONS = {
   MENU_TOUCHED: 7
 };
 
+var blackList = ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2910.0 Safari/537.36"];
+
+navigator.getGamepads = navigator.getGamepads || navigator.webkitGetGamepads;
+
 var GamepadManager = function (_EventDispatcher) {
   inherits(GamepadManager, _EventDispatcher);
   createClass(GamepadManager, null, [{
     key: "isAvailable",
     get: function get() {
-      return !!navigator.getGamepads;
+      return blackList.indexOf(navigator.userAgent) === -1 && !!navigator.getGamepads;
     }
   }]);
 
@@ -9746,7 +9802,7 @@ var PosePredictor = function () {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var isFirefoxAndroid = isFirefox && isMobile;
+var isFirefoxAndroid = isFirefox$1 && isMobile;
 var DEG2RAD$1 = three.Math.DEG2RAD;
 
 /**
@@ -9948,7 +10004,7 @@ var CardboardVRDisplay = function (_VRDisplay) {
   function CardboardVRDisplay(options) {
     classCallCheck(this, CardboardVRDisplay);
 
-    var _this = possibleConstructorReturn(this, (CardboardVRDisplay.__proto__ || Object.getPrototypeOf(CardboardVRDisplay)).call(this, "Google Cardboard", true));
+    var _this = possibleConstructorReturn(this, (CardboardVRDisplay.__proto__ || Object.getPrototypeOf(CardboardVRDisplay)).call(this, "Google Cardboard"));
 
     _this.DOMElement = null;
 
@@ -10539,14 +10595,12 @@ var VR = function (_PoseInputProcessor) {
     var _this = possibleConstructorReturn(this, (VR.__proto__ || Object.getPrototypeOf(VR)).call(this, "VR"));
 
     _this.options = options;
-    _this._requestPresent = function (layers) {
-      return _this.currentDevice.requestPresent(layers).catch(function (exp) {
-        return console.warn("requstPresent", exp);
-      });
-    };
-
     _this.displays = [];
     _this._transformers = [];
+    _this.lastLastTimerDevice = null;
+    _this.lastTimerDevice = null;
+    _this.timerDevice = null;
+    _this.timer = null;
     _this.currentDeviceIndex = -1;
     _this.movePlayer = new three.Matrix4();
     _this.stage = null;
@@ -10577,49 +10631,32 @@ var VR = function (_PoseInputProcessor) {
   }, {
     key: "requestPresent",
     value: function requestPresent(opts) {
-      var _this2 = this;
-
       if (!this.currentDevice) {
         return Promise.reject("No display");
       } else {
-        var promise;
+        var layers = opts,
+            elem = opts[0].source;
 
-        var _ret = function () {
-          var layers = opts,
-              elem = opts[0].source;
+        if (!(layers instanceof Array)) {
+          layers = [layers];
+        }
 
-          if (!(layers instanceof Array)) {
-            layers = [layers];
-          }
+        // A hack to deal with a bug in the current build of Chromium
+        if (this.isNativeMobileWebVR && this.isStereo) {
+          layers = layers[0];
+        }
 
-          // A hack to deal with a bug in the current build of Chromium
-          if (_this2.isNativeMobileWebVR && _this2.isStereo) {
-            layers = layers[0];
-          }
-
-          promise = null;
-
-          if (_this2.currentDevice.capabilities.hasExternalDisplay) {
-            // PCs with HMD should also make the browser window on the main
-            // display full-screen, so we can then also lock pointer.
-            promise = standardFullScreenBehavior(elem).then(function () {
-              return _this2._requestPresent(layers);
-            });
-          } else {
-            promise = _this2._requestPresent(layers).then(standardLockBehavior);
-          }
-          return {
-            v: promise
-          };
-        }();
-
-        if ((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object") return _ret.v;
+        var promise = this.currentDevice.requestPresent(layers);
+        if (isMobile || !isFirefox) {
+          promise = promise.then(standardLockBehavior);
+        }
+        return promise;
       }
     }
   }, {
     key: "cancel",
     value: function cancel() {
-      var _this3 = this;
+      var _this2 = this;
 
       var promise = null;
       if (this.isPresenting) {
@@ -10638,7 +10675,7 @@ var VR = function (_PoseInputProcessor) {
       return promise.then(PointerLock.exit).catch(function (exp) {
         return console.warn(exp);
       }).then(function () {
-        return _this3.connect(0);
+        return _this2.connect(0);
       });
     }
   }, {
@@ -10688,6 +10725,25 @@ var VR = function (_PoseInputProcessor) {
     value: function submitFrame() {
       if (this.currentDevice) {
         this.currentDevice.submitFrame(this.currentPose);
+      }
+    }
+  }, {
+    key: "startAnimation",
+    value: function startAnimation(callback) {
+      if (this.currentDevice) {
+        this.lastLastTimerDevice = this.lastTimerDevice;
+        this.lastTimerDevice = this.timerDevice;
+        this.timerDevice = this.currentDevice;
+        this.timer = this.currentDevice.requestAnimationFrame(callback);
+        return this.timer;
+      }
+    }
+  }, {
+    key: "cancelAnimation",
+    value: function cancelAnimation() {
+      if (this.timerDevice && this.timer) {
+        this.timerDevice.cancelAnimationFrame(this.timer);
+        this.timer = null;
       }
     }
   }, {
@@ -10855,10 +10911,6 @@ var FPSInput = function (_EventDispatcher) {
         strafe: {
           commands: ["strafeLeft", "strafeRight"]
         },
-        lift: {
-          buttons: [Keys.E],
-          scale: 12
-        },
         driveForward: {
           buttons: [-Keys.W, -Keys.UPARROW]
         },
@@ -10994,6 +11046,8 @@ var FPSInput = function (_EventDispatcher) {
 
             _this.pointers.push(ptr);
             _this.options.scene.add(ptr);
+
+            _this.emit("motioncontrollerfound", mgr);
           } else {
             mgr = new Gamepad(_this.gamepadMgr, pad, 0, {
               buttons: {
@@ -11095,13 +11149,8 @@ var FPSInput = function (_EventDispatcher) {
       }
     }
   }, {
-    key: "submitFrame",
-    value: function submitFrame() {
-      this.VR.submitFrame();
-    }
-  }, {
     key: "update",
-    value: function update(dt) {
+    value: function update(dt, ground) {
       var hadGamepad = this.hasGamepad;
       if (this.gamepadMgr) {
         this.gamepadMgr.poll();
@@ -11121,8 +11170,8 @@ var FPSInput = function (_EventDispatcher) {
         this.Touch.enabled = !this.hasMotionControllers;
       }
 
-      this.updateStage(dt);
-      this.stage.position.y = this.options.avatarHeight;
+      this.updateStage(dt, ground);
+      this.stage.position.y += this.options.avatarHeight;
       for (var _i = 0; _i < this.motionDevices.length; ++_i) {
         this.motionDevices[_i].posePosition.y -= this.options.avatarHeight;
       }
@@ -11150,13 +11199,12 @@ var FPSInput = function (_EventDispatcher) {
     }
   }, {
     key: "updateStage",
-    value: function updateStage(dt) {
+    value: function updateStage(dt, ground) {
       // get the linear movement from the mouse/keyboard/gamepad
       var heading = 0,
           pitch = 0,
           strafe = 0,
-          drive = 0,
-          lift = 0;
+          drive = 0;
       for (var i = 0; i < this.managers.length; ++i) {
         var mgr = this.managers[i];
         if (mgr.enabled) {
@@ -11166,7 +11214,6 @@ var FPSInput = function (_EventDispatcher) {
           pitch += mgr.getValue("pitch");
           strafe += mgr.getValue("strafe");
           drive += mgr.getValue("drive");
-          lift += mgr.getValue("lift");
         }
       }
 
@@ -11193,20 +11240,7 @@ var FPSInput = function (_EventDispatcher) {
       this.stage.quaternion.setFromEuler(EULER_TEMP$1);
 
       // update the stage's velocity
-      this.velocity.set(strafe, lift, drive);
-
-      if (this.stage.isOnGround) {
-        if (this.velocity.y > 0) {
-          this.stage.isOnGround = false;
-        }
-      } else {
-        this.velocity.y -= this.options.gravity;
-        if (this.stage.position.y < 0) {
-          this.velocity.y = 0;
-          this.stage.position.y = 0;
-          this.stage.isOnGround = true;
-        }
-      }
+      this.velocity.set(strafe, 0, drive);
 
       QUAT_TEMP$1.copy(this.head.quaternion);
       EULER_TEMP$1.setFromQuaternion(QUAT_TEMP$1);
@@ -11215,6 +11249,8 @@ var FPSInput = function (_EventDispatcher) {
       QUAT_TEMP$1.setFromEuler(EULER_TEMP$1);
 
       this.moveStage(DISPLACEMENT.copy(this.velocity).multiplyScalar(dt).applyQuaternion(QUAT_TEMP$1).add(this.head.position));
+
+      this.stage.position.y = ground.getHeightAt(this.stage.position) || 0;
     }
   }, {
     key: "cancelVR",
@@ -11226,6 +11262,7 @@ var FPSInput = function (_EventDispatcher) {
     key: "moveStage",
     value: function moveStage(position) {
       DISPLACEMENT.copy(position).sub(this.head.position);
+
       this.stage.position.add(DISPLACEMENT);
     }
   }, {
@@ -11620,7 +11657,7 @@ var PlainText = new Grammar("PlainText", [["newlines", /(?:\r\n|\r|\n)/]]);
 var DIFF = new three.Vector3();
 var MAX_MOVE_DISTANCE = 5;
 var MAX_MOVE_DISTANCE_SQ = MAX_MOVE_DISTANCE * MAX_MOVE_DISTANCE;
-var MAX_TELEPORT_WAGGLE = 0.2;
+var MAX_TELEPORT_WAGGLE = 0.5;
 var TELEPORT_PAD_RADIUS = 0.4;
 var TELEPORT_COOLDOWN = 250;
 
@@ -11805,12 +11842,12 @@ var BrowserEnvironment = function (_EventDispatcher) {
         updateFade(dt);
 
         for (var frame = 0; frame < numFrames; ++frame) {
-          _this.input.update(_this.deltaTime);
+          _this.input.update(_this.deltaTime, _this.ground);
 
           if (frame === 0) {
             updateAll();
             _this.input.resolvePicking(_this.scene);
-            _this.ground.position.set(Math.floor(_this.input.head.position.x), 0, Math.floor(_this.input.head.position.z));
+            _this.ground.moveTo(_this.input.head.position);
             _this.sky.position.copy(_this.input.head.position);
             moveUI();
           }
@@ -11895,7 +11932,7 @@ var BrowserEnvironment = function (_EventDispatcher) {
         _this.renderer.render(_this.scene, _this.camera);
         _this.camera.translateOnAxis(st.translation, -1);
       }
-      _this.input.submitFrame();
+      _this.input.VR.submitFrame();
     };
 
     var modifyScreen = function modifyScreen() {
@@ -12300,6 +12337,7 @@ var BrowserEnvironment = function (_EventDispatcher) {
 
       _this.input = new FPSInput(_this.options.fullScreenElement, _this.options);
       _this.input.addEventListener("zero", _this.zero);
+      _this.watch(_this.input, ["motioncontrollerfound"]);
       _this.input.route(FPSInput.EVENTS, _this.consumeEvent.bind(_this));
       _this.input.VR.ready.then(function (displays) {
         return displays.forEach(function (display, i) {
@@ -12600,8 +12638,9 @@ BrowserEnvironment.DEFAULTS = {
   walkSpeed: 2,
   disableKeyboard: false,
   enableShadows: false,
-  shadowMapSize: 1024,
-  shadowCameraSize: 20,
+  shadowMapSize: 2048,
+  shadowCameraSize: 15,
+  shadowRadius: 1,
   progress: null,
   // The rate at which the view fades in and out.
   fadeRate: 5,
