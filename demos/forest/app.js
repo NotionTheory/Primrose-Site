@@ -22,7 +22,7 @@ env.addEventListener("ready", function() {
     MF.loadModel("tree.obj").then(function(treeFactory) {
       treeFactory.template.castShadow = true;
       treeFactory.template.receiveShadow = true;
-      for(var i = 0; i < 500; ++i) {
+      for(var i = 0; i < 100; ++i) {
 
         var tree = treeFactory.clone()
           .named("tree" + i)
