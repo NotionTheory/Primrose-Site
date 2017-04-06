@@ -6,7 +6,6 @@ var skyColor = 0xffff7f,
     fullScreenButtonContainer: "#fullScreenButtonContainer",
     enableShadows: true,
     shadowMapSize: 2048,
-    progress: Preloader.thunk
   }),
 
   sunDistance = 20,
@@ -54,9 +53,9 @@ hand.position.y += handHeight / 2;
 env.addEventListener("ready", Preloader.hide);
 
 env.addEventListener("update", function() {
-  env.sky.sun.latLon(10 - env.currentTime, 30, sunDistance);
+  env.sky.sun.latLng(10 - env.currentTime, 30, sunDistance);
   sun.position.copy(env.sky.sun.position);
-  sun.lookAt(env.input.head);
+  sun.lookAt(env.head);
   var s = (1 + sun.position.y / sunDistance) / 2;
   env.sky.ambient.intensity = 0.5 * s;
   env.scene.fog.color

@@ -22,8 +22,7 @@ var height = 8,
       backgroundColor: 0x000000,
       useFog: true,
       drawDistance: 10,
-      fullScreenButtonContainer: "#fullScreenButtonContainer",
-      progress: Preloader.thunk
+      fullScreenButtonContainer: "#fullScreenButtonContainer"
     });
 
 function text(size, text) {
@@ -50,7 +49,7 @@ function Board(type){
       btn = box(padSize, padSize, padDepth)
         .colored(colorOff)
         .named("btn" + i)
-        .latLon(lat, lon);
+        .latLng(lat, lon);
 
     box(padSize * 1.1, padSize * 1.1, padDepth * 0.9)
       .colored(colorPlay)
@@ -86,7 +85,7 @@ Board.prototype.update = function() {
       }
     }
   }
-  DIST.set(this.object.position.x, env.input.head.position.y, this.object.position.z);
+  DIST.set(this.object.position.x, env.head.position.y, this.object.position.z);
   this.object.position.lerp(DIST, 0.01);
 };
 
@@ -98,7 +97,7 @@ Board.prototype.highlight = function(i, color) {
 };
 
 Board.prototype.select = function(i, evt) {
-  if(!env.input.hasMouse || evt.pointer.name === "MousePointer") {
+  if(!env.hasMouse || evt.pointer.name === "MousePointer") {
     this.btnState[i] = !this.btnState[i];
     this.highlight(i);
   }
@@ -112,7 +111,7 @@ env.addEventListener("ready", function () {
     var board = new Board(type);
     boards.push(board);
     env.scene.add(board.object);
-    board.object.latLon(0, (t - (nTypes - 1) / 2) * 100 / nTypes);
+    board.object.latLng(0, (t - (nTypes - 1) / 2) * 100 / nTypes);
   });
 
   Preloader.hide();

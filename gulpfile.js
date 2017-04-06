@@ -4,8 +4,6 @@
   fs = require("fs"),
   primroseInfo = require("../Primrose/package.json"),
   pkg = require("./package.json"),
-  build = require("notiontheory-basic-build"),
-  nt = build.setup(gulp, pkg),
 
   primroseFiles = primroseInfo.files
     .map((f) => "../Primrose/" + f.replace(/\/$/, "/**/*"))

@@ -10,8 +10,7 @@ var GRASS = "../shared_assets/images/grass.png",
     skyTexture: DECK,
     groundTexture: DECK,
     font: "../shared_assets/fonts/helvetiker_regular.typeface.json",
-    fullScreenButtonContainer: "#fullScreenButtonContainer",
-    progress: Preloader.thunk
+    fullScreenButtonContainer: "#fullScreenButtonContainer"
   }),
 
   editor = null,
@@ -253,9 +252,9 @@ function pacman() {
       ghosts.forEach(function (g) {
         g.position.add(g.velocity.clone()
           .multiplyScalar(dt));
-        collisionCheck(dt, g, env.input.head);
+        collisionCheck(dt, g, env.head);
       });
     }
-    collisionCheck(dt, env.input.head, null);
+    collisionCheck(dt, env.head, null);
   }
 }

@@ -1,7 +1,7 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global.Preloader = factory());
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.Preloader = factory());
 }(this, (function () { 'use strict';
 
 function get(file, done) {
@@ -14,6 +14,12 @@ function get(file, done) {
   x.send();
 }
 
+function findProgressBar() {
+  if (!prog.bar) {
+    prog.bar = document.querySelector("progress");
+  }
+}
+
 var prog = {
   bar: null,
   files: {},
@@ -21,12 +27,14 @@ var prog = {
   total: 0,
 
   shrink: function shrink(size) {
+    findProgressBar();
     if (prog.bar) {
       prog.bar.style.height = size;
     }
   },
 
   hide: function hide() {
+    findProgressBar();
     if (prog.bar) {
       prog.bar.style.display = "none";
     }
@@ -66,9 +74,7 @@ var prog = {
     prog.loaded = loaded;
     prog.total = total;
 
-    if (!prog.bar) {
-      prog.bar = document.querySelector("progress");
-    }
+    findProgressBar();
 
     if (prog.bar && total) {
       prog.bar.max = total;
@@ -120,3 +126,4 @@ if (curScript && curScript.dataset.files) {
 return prog;
 
 })));
+//# sourceMappingURL=preloader.js.map

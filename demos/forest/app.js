@@ -7,7 +7,6 @@ var env = new Primrose.BrowserEnvironment({
   enableShadows: true,
   shadowRadius: 3,
   fullScreenButtonContainer: "#fullScreenButtonContainer",
-  progress: Preloader.thunk
 });
 
 var MF = Primrose.Graphics.ModelFactory;
@@ -39,9 +38,9 @@ env.addEventListener("ready", function() {
 
         do {
           tree.position.set(
-            Primrose.Random.number(-25, 25),
+            Primrose.Random.number(-15, 15),
             0,
-            Primrose.Random.number(-25, 25));
+            Primrose.Random.number(-15, 15));
           tree.position.y = env.ground.getHeightAt(tree.position);
         } while(tree.position.y === undefined);
 

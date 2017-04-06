@@ -16,7 +16,6 @@ var WIDTH = 100,
     drawDistance: 100,
     enableShadows: true,
     fullScreenButtonContainer: "#fullScreenButtonContainer",
-    progress: Preloader.thunk
   });
 
 
@@ -72,7 +71,7 @@ function Jabber(w, h, s) {
       root.position.y = 0;
     }
     v.copy(root.position)
-      .sub(env.input.head.position);
+      .sub(env.head.position);
     var d = v.length();
     if (d < 3) {
       v.divideScalar(d);
@@ -83,7 +82,7 @@ function Jabber(w, h, s) {
         R.number(-0.01, 0.01),
         R.number(-0.01, 0.01));
       root.position.add(v);
-      root.lookAt(env.input.head.position);
+      root.lookAt(env.head.position);
     }
     else {
       root.lookAt(
