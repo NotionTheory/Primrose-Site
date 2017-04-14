@@ -39,6 +39,7 @@
     "primrose": "^0.31.0"
   },
   "devDependencies": {
+    "gulp": "^3.9.1",
     "gulp-rename": "^1.2.2"
   }
 }
