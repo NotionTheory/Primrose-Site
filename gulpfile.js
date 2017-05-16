@@ -16,26 +16,24 @@
 primroseFiles.push("../Primrose/index.html");
 
 pkg.version = primroseInfo.version;
-fs.writeFileSync(
-  "package.json",
-  JSON.stringify(
-    pkg,
-    (k, v) => k === "packageName" ? undefined : v,
-    2));
 
-gulp.task("copy:primrose", () => gulp.src(primroseFiles, { base: "../Primrose/" })
-  .pipe(gulp.dest(".")));
+fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
 
-gulp.task("archive", ["copy:primrose"], () => gulp.src(["Primrose*.js"])
-  .pipe(rename(function (file) {
-    if (file.basename.indexOf(".min") > -1) {
-      file.extname = ".min.js";
-      file.basename = file.basename.substring(0, file.basename.length - 4);
-    }
-    file.basename += "-" + primroseInfo.version;
-    return file;
-  }))
-  .pipe(gulp.dest("archive")));
+gulp.task("copy:primrose", () =>
+  gulp.src(primroseFiles, { base: "../Primrose/" })
+    .pipe(gulp.dest(".")));
+
+gulp.task("archive", ["copy:primrose"], () =>
+  gulp.src(["Primrose*.js"])
+    .pipe(rename(function (file) {
+      if (file.basename.indexOf(".min") > -1) {
+        file.extname = ".min.js";
+        file.basename = file.basename.substring(0, file.basename.length - 4);
+      }
+      file.basename += "-" + primroseInfo.version;
+      return file;
+    }))
+    .pipe(gulp.dest("archive")));
 
 
 gulp.task("zip:quickstart", ["copy:primrose"], () => gulp.src(["quickstart/**/*"])
