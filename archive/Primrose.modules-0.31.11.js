@@ -1,10 +1,4 @@
-console.info("[Primrose]:> primrose v0.31.12. see https://www.primrosevr.com for more information.");
-
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
-	(global.Primrose = factory());
-}(this, (function () { 'use strict';
+console.info("[Primrose]:> primrose v0.31.11. see https://www.primrosevr.com for more information.");
 
 var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
 
@@ -56479,7 +56473,5 @@ var index$5 = {
 Object.assign(window, flags, liveAPI, util);
 // Do this just for side effects, we are monkey-patching Three.js classes with our own utilities.
 
-return index$5;
-
-})));
-//# sourceMappingURL=Primrose.js.map
+export default index$5;
+//# sourceMappingURL=Primrose.modules.js.map

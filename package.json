@@ -2,7 +2,7 @@
   "name": "primrose-site",
   "private": true,
   "description": "Primrose is a for Virtual Reality applications in Web browsers. It includes a basic syntax highlighting text editor.",
-  "version": "0.31.10",
+  "version": "0.31.12",
   "engines": {
     "node": ">=4.0.0"
   },
@@ -11,18 +11,10 @@
   "homepage": "http://www.primrosevr.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/capnmidnight/Primrose-Site.git"
+    "url": "https://github.com/capnmidnight/Primrose.git"
   },
-  "bugs": "https://github.com/capnmidnight/Primrose-Site/issues",
+  "bugs": "https://github.com/capnmidnight/Primrose/issues",
   "files": [],
-  "scripts": {
-    "start": "node server.js",
-    "redev": "node server.js --mode=dev --path=..",
-    "dev": "node server.js --mode=dev --path=.. --url=Primrose/meeting/?room=test",
-    "demo": "node server.js --mode=dev --path=../Primrose --url=meeting/",
-    "local": "node server.js --mode=localOnly --path=.. --url=Primrose/meeting/",
-    "test": "node server.js --mode=dev --path=.. --url=replay-telemetry/test.html"
-  },
   "keywords": [
     "virtual reality",
     "VR",
@@ -34,12 +26,10 @@
     "syntax",
     "highlighting"
   ],
-  "dependencies": {
-    "gulp-zip": "^3.2.0",
-    "primrose": "^0.31.0"
-  },
   "devDependencies": {
     "gulp": "^3.9.1",
-    "gulp-rename": "^1.2.2"
+    "gulp-zip": "^3.2.0",
+    "gulp-rename": "^1.2.2",
+    "primrose": "^0.31.0"
   }
 }
