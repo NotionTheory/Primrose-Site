@@ -2,25 +2,25 @@
   zip = require("gulp-zip"),
   rename = require("gulp-rename"),
   fs = require("fs"),
-  primroseInfo = require("../Primrose/package.json"),
+  primroseInfo = require("../fx/package.json"),
   pkg = require("./package.json"),
 
   primroseFiles = primroseInfo.files
-    .map((f) => "../Primrose/" + f.replace(/\/$/, "/**/*"))
+    .map((f) => "../fx/" + f.replace(/\/$/, "/**/*"))
     .concat([
-      "!../Primrose/**/*.pug",
-      "!../Primrose/**/*.styl",
-      "!../Primrose/src/**/*"
+      "!../fx/**/*.pug",
+      "!../fx/**/*.styl",
+      "!../fx/src/**/*"
     ]);
 
-primroseFiles.push("../Primrose/index.html");
+primroseFiles.push("../fx/index.html");
 
 pkg.version = primroseInfo.version;
 
 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
 
 gulp.task("copy:primrose", () =>
-  gulp.src(primroseFiles, { base: "../Primrose/" })
+  gulp.src(primroseFiles, { base: "../fx/" })
     .pipe(gulp.dest(".")));
 
 gulp.task("archive", ["copy:primrose"], () =>
